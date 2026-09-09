@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/themes/blue/pace-theme-minimal.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous" defer></script>
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"magicxhouse.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.29.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":"mac"},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="前言本文的目的是讲清楚旧管线（ForwardPipeline、DefferedPipeline）一帧之内的完整渲染流程——从引擎的帧循环入口开始，经过 Director 调度、Root 管理、场景剔除、管线组织，最终在 RenderQueue 中提交 DrawCall。 一帧渲染的完整链路1234567891011121314151617181920212223242526272829303132">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Cocos旧管线一帧渲染流程：从 Enginetick()到DrawCall">
+<meta property="og:url" content="https://magicxhouse.github.io/2026/08/29/Cocos%E6%97%A7%E7%AE%A1%E7%BA%BF%E4%B8%80%E5%B8%A7%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B%EF%BC%9A%E4%BB%8E%20Enginetick()%E5%88%B0DrawCall/index.html">
+<meta property="og:site_name" content="MagicX Story">
+<meta property="og:description" content="前言本文的目的是讲清楚旧管线（ForwardPipeline、DefferedPipeline）一帧之内的完整渲染流程——从引擎的帧循环入口开始，经过 Director 调度、Root 管理、场景剔除、管线组织，最终在 RenderQueue 中提交 DrawCall。 一帧渲染的完整链路1234567891011121314151617181920212223242526272829303132">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2026-08-29T02:33:52.000Z">
+<meta property="article:modified_time" content="2026-09-09T08:24:04.251Z">
+<meta property="article:author" content="MagicX">
+<meta property="article:tag" content="cocos">
+<meta property="article:tag" content="RenderScene">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://magicxhouse.github.io/2026/08/29/Cocos%E6%97%A7%E7%AE%A1%E7%BA%BF%E4%B8%80%E5%B8%A7%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B%EF%BC%9A%E4%BB%8E%20Enginetick()%E5%88%B0DrawCall/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://magicxhouse.github.io/2026/08/29/Cocos%E6%97%A7%E7%AE%A1%E7%BA%BF%E4%B8%80%E5%B8%A7%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B%EF%BC%9A%E4%BB%8E%20Enginetick()%E5%88%B0DrawCall/","path":"2026/08/29/Cocos旧管线一帧渲染流程：从 Enginetick()到DrawCall/","title":"Cocos旧管线一帧渲染流程：从 Enginetick()到DrawCall"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Cocos旧管线一帧渲染流程：从 Enginetick()到DrawCall | MagicX Story</title>
+  
+
+
+
+
+
+
+
+
+  
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/11.10.1/mermaid.min.js","integrity":"sha256-BmQmdWDS8X2OTbrwELWK366LV6escyWhHHe0XCTU/Hk="}}</script>
+  <script src="/js/third-party/tags/mermaid.js" defer></script>
+
+
+
+  <script src="/js/third-party/pace.js" defer></script>
+
+
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">MagicX Story</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E5%B8%A7%E6%B8%B2%E6%9F%93%E7%9A%84%E5%AE%8C%E6%95%B4%E9%93%BE%E8%B7%AF"><span class="nav-number">2.</span> <span class="nav-text">一帧渲染的完整链路</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AC%AC%E4%B8%80%E6%AD%A5%EF%BC%9A%E5%B8%A7%E5%85%A5%E5%8F%A3"><span class="nav-number">3.</span> <span class="nav-text">第一步：帧入口</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1%E3%80%81%E5%8E%9F%E7%94%9F%E5%B9%B3%E5%8F%B0-C"><span class="nav-number">3.1.</span> <span class="nav-text">1、原生平台 (C++)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2%E3%80%81Web-%E5%B9%B3%E5%8F%B0-TS"><span class="nav-number">3.2.</span> <span class="nav-text">2、Web 平台 (TS)</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AC%AC%E4%BA%8C%E6%AD%A5%EF%BC%9ADirector-%E8%B0%83%E5%BA%A6"><span class="nav-number">4.</span> <span class="nav-text">第二步：Director 调度</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AC%AC%E4%B8%89%E6%AD%A5%EF%BC%9ARoot-%E6%80%BB%E6%8E%A7"><span class="nav-number">5.</span> <span class="nav-text">第三步：Root 总控</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AC%AC%E5%9B%9B%E6%AD%A5%EF%BC%9A%E7%81%AF%E5%85%89%E5%89%94%E9%99%A4%E4%B8%8E%E5%9C%BA%E6%99%AF%E4%B8%BB%E5%89%94%E9%99%A4"><span class="nav-number">6.</span> <span class="nav-text">第四步：灯光剔除与场景主剔除</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1%E3%80%81%E7%81%AF%E5%85%89%E5%89%94%E9%99%A4-validPunctualLightsCulling"><span class="nav-number">6.1.</span> <span class="nav-text">1、灯光剔除 validPunctualLightsCulling</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2%E3%80%81%E5%9C%BA%E6%99%AF%E4%B8%BB%E5%89%94%E9%99%A4-sceneCulling"><span class="nav-number">6.2.</span> <span class="nav-text">2、场景主剔除 sceneCulling</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AC%AC%E4%BA%94%E6%AD%A5%EF%BC%9A%E7%AE%A1%E7%BA%BF%E7%BB%84%E7%BB%87-%E2%80%94-Pipeline-%E2%86%92-Flow-%E2%86%92-Stage-%E2%86%92-Queue"><span class="nav-number">7.</span> <span class="nav-text">第五步：管线组织 — Pipeline → Flow → Stage → Queue</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1%E3%80%81%E5%89%8D%E5%90%91%E7%AE%A1%E7%BA%BF-ForwardPipeline"><span class="nav-number">7.1.</span> <span class="nav-text">1、前向管线 (ForwardPipeline)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2%E3%80%81%E5%BB%B6%E8%BF%9F%E7%AE%A1%E7%BA%BF-DeferredPipeline"><span class="nav-number">7.2.</span> <span class="nav-text">2、延迟管线 (DeferredPipeline)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3%E3%80%81RenderFlow-%E7%9A%84-render-%E6%96%B9%E6%B3%95"><span class="nav-number">7.3.</span> <span class="nav-text">3、RenderFlow 的 render 方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4%E3%80%81ForwardFlow-%E7%9A%84-Stage-%E7%BB%84%E6%88%90"><span class="nav-number">7.4.</span> <span class="nav-text">4、ForwardFlow 的 Stage 组成</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5%E3%80%81ShadowFlow-%E7%9A%84-Stage-%E7%BB%84%E6%88%90"><span class="nav-number">7.5.</span> <span class="nav-text">5、ShadowFlow 的 Stage 组成</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AC%AC%E5%85%AD%E6%AD%A5%EF%BC%9ARenderStage-%E6%89%A7%E8%A1%8C%E6%B8%B2%E6%9F%93"><span class="nav-number">8.</span> <span class="nav-text">第六步：RenderStage 执行渲染</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AC%AC%E4%B8%83%E6%AD%A5%EF%BC%9ARenderQueue-%E6%8E%92%E5%BA%8F%E4%B8%8E%E5%BD%95%E5%88%B6"><span class="nav-number">9.</span> <span class="nav-text">第七步：RenderQueue 排序与录制</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1%E3%80%81%E6%8F%92%E5%85%A5-Pass"><span class="nav-number">9.1.</span> <span class="nav-text">1、插入 Pass</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2%E3%80%81%E6%8E%92%E5%BA%8F"><span class="nav-number">9.2.</span> <span class="nav-text">2、排序</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3%E3%80%81%E5%BD%95%E5%88%B6%E5%91%BD%E4%BB%A4%E7%BC%93%E5%86%B2"><span class="nav-number">9.3.</span> <span class="nav-text">3、录制命令缓冲</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%87%8D%E8%A6%81%E6%96%87%E4%BB%B6%E6%B1%87%E6%80%BB"><span class="nav-number">10.</span> <span class="nav-text">重要文件汇总</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">11.</span> <span class="nav-text">总结</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">MagicX</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">6</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">tags</span>
+      </div>
+  </nav>
+</div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://magicxhouse.github.io/2026/08/29/Cocos%E6%97%A7%E7%AE%A1%E7%BA%BF%E4%B8%80%E5%B8%A7%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B%EF%BC%9A%E4%BB%8E%20Enginetick()%E5%88%B0DrawCall/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="MagicX">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="MagicX Story">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Cocos旧管线一帧渲染流程：从 Enginetick()到DrawCall | MagicX Story">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Cocos旧管线一帧渲染流程：从 Enginetick()到DrawCall
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2026-08-29 10:33:52" itemprop="dateCreated datePublished" datetime="2026-08-29T10:33:52+08:00">2026-08-29</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">Edited on</span>
+      <time title="Modified: 2026-09-09 16:24:04" itemprop="dateModified" datetime="2026-09-09T16:24:04+08:00">2026-09-09</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/cocos%E6%BA%90%E7%A0%81%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">cocos源码笔记</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/cocos%E6%BA%90%E7%A0%81%E7%AC%94%E8%AE%B0/RenderScene/" itemprop="url" rel="index"><span itemprop="name">RenderScene</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>本文的目的是讲清楚旧管线（ForwardPipeline、DefferedPipeline）一帧之内的完整渲染流程——从引擎的帧循环入口开始，经过 Director 调度、Root 管理、场景剔除、管线组织，最终在 RenderQueue 中提交 DrawCall。</p>
+<h2 id="一帧渲染的完整链路"><a href="#一帧渲染的完整链路" class="headerlink" title="一帧渲染的完整链路"></a>一帧渲染的完整链路</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line">原生平台 (C++)                          Web 平台 (TS)</span><br><span class="line">══════════════════════                  ══════════════════════</span><br><span class="line">Engine::tick()                          Game._updateCallback()</span><br><span class="line">│                                       │</span><br><span class="line">├── _gfxDevice-&gt;frameSync()             │</span><br><span class="line">├── sleep_for (帧率限制)                │</span><br><span class="line">├── _scheduler-&gt;update(dt)              │</span><br><span class="line">├── mainLoopUpdate()                    │</span><br><span class="line">│       │                               │</span><br><span class="line">│       ▼                               ▼</span><br><span class="line">│   Director.tick(dt) ←───────────────┘</span><br><span class="line">│       │</span><br><span class="line">│       ├── 更新阶段</span><br><span class="line">│       │   ├── 组件 start/update/lateUpdate</span><br><span class="line">│       │   ├── 系统 update/postUpdate</span><br><span class="line">│       │   └── 延迟销毁对象</span><br><span class="line">│       │</span><br><span class="line">│       ├── 渲染阶段</span><br><span class="line">│       │   ├── 更新脏 UI 渲染器</span><br><span class="line">│       │   └── Root.frameMove(dt)</span><br><span class="line">│       │       │</span><br><span class="line">│       │       ├── _frameMoveBegin</span><br><span class="line">│       │       │   ├── 清空 scenes 的 Batch</span><br><span class="line">│       │       │   └── 清空 cameraList</span><br><span class="line">│       │       │</span><br><span class="line">│       │       ├── _frameMoveProcess</span><br><span class="line">│       │       │   ├── 从窗口提取相机列表</span><br><span class="line">│       │       │   ├── 2D 合批 (Batcher2D)</span><br><span class="line">│       │       │   └── scenes[i].update(stamp)</span><br><span class="line">│       │       │</span><br><span class="line">│       │       └── _frameMoveEnd</span><br><span class="line">│       │           ├── 按 priority 排序相机</span><br><span class="line">│       │           └── pipeline.render(cameraList)</span><br><span class="line">│       │               │</span><br><span class="line">│       │               └── 对每个相机：</span><br><span class="line">│       │                   ├── validPunctualLightsCulling</span><br><span class="line">│       │                   ├── sceneCulling</span><br><span class="line">│       │                   ├── updateGlobalUBO / updateCameraUBO</span><br><span class="line">│       │                   └── 遍历 flows[j].render(camera)</span><br><span class="line">│       │                       │</span><br><span class="line">│       │                       └── 遍历 stages[k].render(camera)</span><br><span class="line">│       │                           │</span><br><span class="line">│       │                           ├── 清空 renderQueues</span><br><span class="line">│       │                           ├── 收集 SubModel/Pass</span><br><span class="line">│       │                           ├── renderQueues.sort()</span><br><span class="line">│       │                           └── renderQueues.recordCommandBuffer()</span><br><span class="line">│       │                               └── GPU 执行 DrawCall</span><br><span class="line">│       │</span><br><span class="line">│       └── 清理 Node 标记、更新总帧数</span><br><span class="line">│</span><br><span class="line">├── DeferredReleasePool::clear()</span><br><span class="line">└── dt 平滑计算</span><br></pre></td></tr></table></figure>
+
+<h2 id="第一步：帧入口"><a href="#第一步：帧入口" class="headerlink" title="第一步：帧入口"></a>第一步：帧入口</h2><h3 id="1、原生平台-C"><a href="#1、原生平台-C" class="headerlink" title="1、原生平台 (C++)"></a>1、原生平台 (C++)</h3><p><code>native/cocos/engine/Engine.cpp</code> 中的 <code>Engine::tick()</code> 是原生平台的帧循环入口，由操作系统定时器驱动，每帧执行。源码验证如下：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">Engine::tick</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 1、帧起始与 GPU 同步</span></span><br><span class="line">    _gfxDevice-&gt;<span class="built_in">frameSync</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 2、帧率限制（Android/Windows/OpenHarmony/macOS）</span></span><br><span class="line">    <span class="keyword">if</span> (dtNS &lt; _preferredNanosecondsPerFrame) &#123;</span><br><span class="line">        std::this_thread::<span class="built_in">sleep_for</span>(...);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 3、核心逻辑更新</span></span><br><span class="line">    _scheduler-&gt;<span class="built_in">update</span>(dt);</span><br><span class="line">    events::Tick::<span class="built_in">broadcast</span>(dt);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 4、渲染主循环（C++ → TS 的桥梁）</span></span><br><span class="line">    se::ScriptEngine::<span class="built_in">getInstance</span>()-&gt;<span class="built_in">mainLoopUpdate</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 5、资源回收与异步回调</span></span><br><span class="line">    DeferredReleasePool::<span class="built_in">clear</span>();</span><br><span class="line">    _scheduler-&gt;<span class="built_in">runFunctionsToBePerformedInCocosThread</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 6、DeltaTime 平滑</span></span><br><span class="line">    dtNS = dtNS * <span class="number">0.1</span> + <span class="number">0.9</span> * ...;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>六个阶段的作用如下：</p>
+<table>
+<thead>
+<tr>
+<th align="left">阶段</th>
+<th align="left">关键代码</th>
+<th align="left">核心任务</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">① 帧起始</td>
+<td align="left"><code>_gfxDevice-&gt;frameSync()</code></td>
+<td align="left">等待上一帧 GPU 命令执行完毕，回收 CommandBuffer</td>
+</tr>
+<tr>
+<td align="left">② 帧率限制</td>
+<td align="left"><code>sleep_for(...)</code></td>
+<td align="left">省电控温，防止设备过热降频</td>
+</tr>
+<tr>
+<td align="left">③ 逻辑更新</td>
+<td align="left"><code>_scheduler-&gt;update(dt)</code></td>
+<td align="left">驱动定时器、Action、用户脚本 update</td>
+</tr>
+<tr>
+<td align="left">④ 渲染主循环</td>
+<td align="left"><code>mainLoopUpdate()</code></td>
+<td align="left">进入 TS 层，触发整个渲染管线</td>
+</tr>
+<tr>
+<td align="left">⑤ 资源回收</td>
+<td align="left"><code>DeferredReleasePool::clear()</code></td>
+<td align="left">释放标记销毁的对象，执行异步回调</td>
+</tr>
+<tr>
+<td align="left">⑥ dt 平滑</td>
+<td align="left"><code>dtNS = dtNS * 0.1 + 0.9 * ...</code></td>
+<td align="left">指数平滑法，避免帧率波动导致逻辑跳跃</td>
+</tr>
+</tbody></table>
+<h3 id="2、Web-平台-TS"><a href="#2、Web-平台-TS" class="headerlink" title="2、Web 平台 (TS)"></a>2、Web 平台 (TS)</h3><p><code>cocos/game/game.ts</code> 中的 <code>Game._updateCallback()</code> 是 Web 平台的入口，由浏览器 <code>requestAnimationFrame</code> 驱动：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="title function_">_updateCallback</span> (): <span class="built_in">void</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (!<span class="variable language_">this</span>.<span class="property">_inited</span>) <span class="keyword">return</span>;</span><br><span class="line">    <span class="keyword">if</span> (<span class="comment">/* 闪屏阶段 */</span>) &#123;</span><br><span class="line">        <span class="title class_">SplashScreen</span>.<span class="property">instance</span>.<span class="title function_">update</span>(...);</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (<span class="variable language_">this</span>.<span class="property">_shouldLoadLaunchScene</span>) &#123;</span><br><span class="line">        <span class="comment">// 加载启动场景</span></span><br><span class="line">        director.<span class="title function_">loadScene</span>(launchScene, ...);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        director.<span class="title function_">tick</span>(<span class="variable language_">this</span>.<span class="title function_">_calculateDT</span>(<span class="literal">false</span>));  <span class="comment">// 正常帧循环</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>两条路径最终都汇聚到 <code>Director.tick(dt)</code>。</p>
+<h2 id="第二步：Director-调度"><a href="#第二步：Director-调度" class="headerlink" title="第二步：Director 调度"></a>第二步：Director 调度</h2><p><code>cocos/game/director.ts</code> 是主循环的核心实现。它将一帧拆成两个阶段：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="title function_">tick</span> (<span class="attr">dt</span>: <span class="built_in">number</span>): <span class="built_in">void</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (!<span class="variable language_">this</span>.<span class="property">_invalid</span>) &#123;</span><br><span class="line">        <span class="variable language_">this</span>.<span class="title function_">emit</span>(<span class="title class_">DirectorEvent</span>.<span class="property">BEGIN_FRAME</span>);</span><br><span class="line">        <span class="comment">// 【更新阶段】</span></span><br><span class="line">        <span class="keyword">if</span> (!<span class="variable language_">this</span>.<span class="property">_paused</span>) &#123;</span><br><span class="line">            <span class="variable language_">this</span>.<span class="title function_">emit</span>(<span class="title class_">DirectorEvent</span>.<span class="property">BEFORE_UPDATE</span>);</span><br><span class="line">            <span class="variable language_">this</span>.<span class="property">_compScheduler</span>.<span class="title function_">startPhase</span>();       <span class="comment">// 组件 start</span></span><br><span class="line">            <span class="variable language_">this</span>.<span class="property">_compScheduler</span>.<span class="title function_">updatePhase</span>(dt);    <span class="comment">// 组件 update</span></span><br><span class="line">            <span class="variable language_">this</span>.<span class="property">_systems</span>[i].<span class="title function_">update</span>(dt);            <span class="comment">// 系统 update</span></span><br><span class="line">            <span class="variable language_">this</span>.<span class="property">_compScheduler</span>.<span class="title function_">lateUpdatePhase</span>(dt);<span class="comment">// 组件 lateUpdate</span></span><br><span class="line">            <span class="variable language_">this</span>.<span class="title function_">emit</span>(<span class="title class_">DirectorEvent</span>.<span class="property">AFTER_UPDATE</span>);</span><br><span class="line">            <span class="title class_">CCObject</span>.<span class="title function_">_deferredDestroy</span>();            <span class="comment">// 延迟销毁</span></span><br><span class="line">            <span class="variable language_">this</span>.<span class="property">_systems</span>[i].<span class="title function_">postUpdate</span>(dt);        <span class="comment">// 系统 postUpdate</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 【渲染阶段】</span></span><br><span class="line">        <span class="variable language_">this</span>.<span class="title function_">emit</span>(<span class="title class_">DirectorEvent</span>.<span class="property">BEFORE_DRAW</span>);</span><br><span class="line">        uiRendererManager.<span class="title function_">updateAllDirtyRenderers</span>(); <span class="comment">// 更新脏 UI 渲染器</span></span><br><span class="line">        <span class="variable language_">this</span>.<span class="property">_root</span>!.<span class="title function_">frameMove</span>(dt);                   <span class="comment">// 执行实际渲染</span></span><br><span class="line">        <span class="variable language_">this</span>.<span class="title function_">emit</span>(<span class="title class_">DirectorEvent</span>.<span class="property">AFTER_DRAW</span>);</span><br><span class="line">        <span class="comment">// 收尾</span></span><br><span class="line">        <span class="title class_">Node</span>.<span class="title function_">resetHasChangedFlags</span>();</span><br><span class="line">        <span class="title class_">Node</span>.<span class="title function_">clearNodeArray</span>();</span><br><span class="line">        <span class="variable language_">this</span>.<span class="title function_">emit</span>(<span class="title class_">DirectorEvent</span>.<span class="property">END_FRAME</span>);</span><br><span class="line">        <span class="variable language_">this</span>.<span class="property">_totalFrames</span>++;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="第三步：Root-总控"><a href="#第三步：Root-总控" class="headerlink" title="第三步：Root 总控"></a>第三步：Root 总控</h2><p><code>cocos/root.ts</code> 中的 <code>Root</code> 是渲染系统的顶层管理器。<code>Director</code> 只管调度，真正的渲染工作交给 <code>Root</code>：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="title function_">frameMove</span> (<span class="attr">deltaTime</span>: <span class="built_in">number</span>): <span class="built_in">void</span> &#123;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="title function_">_frameMoveBegin</span>();</span><br><span class="line">    <span class="variable language_">this</span>.<span class="title function_">_frameMoveProcess</span>();</span><br><span class="line">    <span class="variable language_">this</span>.<span class="title function_">_frameMoveEnd</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>三个阶段的具体任务：</p>
+<p>**<code>_frameMoveBegin</code>**：清空上帧的 2D Batch 和相机列表。</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="title function_">_frameMoveBegin</span> (): <span class="built_in">void</span> &#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; <span class="variable language_">this</span>.<span class="property">_scenes</span>.<span class="property">length</span>; ++i) &#123;</span><br><span class="line">        <span class="variable language_">this</span>.<span class="property">_scenes</span>[i].<span class="title function_">removeBatches</span>();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">_cameraList</span>.<span class="property">length</span> = <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>**<code>_frameMoveProcess</code>**：提取相机、更新场景、2D 合批。</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="title function_">_frameMoveProcess</span> (): <span class="built_in">void</span> &#123;</span><br><span class="line">    <span class="comment">// 1. 从所有窗口提取相机</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; windows.<span class="property">length</span>; i++) &#123;</span><br><span class="line">        windows[i].<span class="title function_">extractRenderCameras</span>(cameraList);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 2. 2D 合批</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="variable language_">this</span>.<span class="property">_batcher</span>) &#123;</span><br><span class="line">        <span class="variable language_">this</span>.<span class="property">_batcher</span>.<span class="title function_">update</span>();</span><br><span class="line">        <span class="variable language_">this</span>.<span class="property">_batcher</span>.<span class="title function_">uploadBuffers</span>();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 3. 更新所有 RenderScene</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; scenes.<span class="property">length</span>; i++) &#123;</span><br><span class="line">        scenes[i].<span class="title function_">update</span>(stamp);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>**<code>_frameMoveEnd</code>**：排序相机、调用管线渲染、提交到屏幕。</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="title function_">_frameMoveEnd</span> (): <span class="built_in">void</span> &#123;</span><br><span class="line">    cameraList.<span class="title function_">sort</span>(<span class="function">(<span class="params">a, b</span>) =&gt;</span> a.<span class="property">priority</span> - b.<span class="property">priority</span>);  <span class="comment">// 按 priority 排序</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; cameraList.<span class="property">length</span>; ++i) &#123;</span><br><span class="line">        cameraList[i].<span class="property">geometryRenderer</span>?.<span class="title function_">update</span>();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">_pipeline</span>.<span class="title function_">render</span>(cameraList);  <span class="comment">// 进入管线</span></span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">_device</span>.<span class="title function_">present</span>();             <span class="comment">// 提交到屏幕</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Root 持有以下核心资源：</p>
+<table>
+<thead>
+<tr>
+<th align="left">成员</th>
+<th align="left">含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><code>_device</code></td>
+<td align="left">GFX 设备，所有 GPU 操作的入口</td>
+</tr>
+<tr>
+<td align="left"><code>_windows</code></td>
+<td align="left">渲染窗口数组</td>
+</tr>
+<tr>
+<td align="left"><code>_scenes</code></td>
+<td align="left">RenderScene 数组，每个逻辑场景对应一个</td>
+</tr>
+<tr>
+<td align="left"><code>_pipeline</code></td>
+<td align="left">渲染管线（前向&#x2F;延迟&#x2F;自定义）</td>
+</tr>
+<tr>
+<td align="left"><code>_batcher</code></td>
+<td align="left">2D 合批器</td>
+</tr>
+<tr>
+<td align="left"><code>_cameraList</code></td>
+<td align="left">当前帧的活跃相机列表</td>
+</tr>
+</tbody></table>
+<h2 id="第四步：灯光剔除与场景主剔除"><a href="#第四步：灯光剔除与场景主剔除" class="headerlink" title="第四步：灯光剔除与场景主剔除"></a>第四步：灯光剔除与场景主剔除</h2><p>进入管线后，<code>cocos/rendering/render-pipeline.ts</code> 的 <code>RenderPipeline.render()</code> 对每个相机执行两种剔除：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="title function_">render</span> (<span class="attr">cameras</span>: <span class="title class_">Camera</span>[]): <span class="built_in">void</span> &#123;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">_commandBuffers</span>[<span class="number">0</span>].<span class="title function_">begin</span>();</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; cameras.<span class="property">length</span>; i++) &#123;</span><br><span class="line">        <span class="keyword">const</span> camera = cameras[i];</span><br><span class="line">        <span class="keyword">if</span> (camera.<span class="property">scene</span>) &#123;</span><br><span class="line">            <span class="title function_">validPunctualLightsCulling</span>(<span class="variable language_">this</span>.<span class="property">pipelineSceneData</span>, camera);  <span class="comment">// ①</span></span><br><span class="line">            <span class="title function_">sceneCulling</span>(<span class="variable language_">this</span>.<span class="property">pipelineSceneData</span>, <span class="variable language_">this</span>.<span class="property">pipelineUBO</span>, camera);  <span class="comment">// ②</span></span><br><span class="line">            <span class="variable language_">this</span>.<span class="property">_pipelineUBO</span>.<span class="title function_">updateGlobalUBO</span>(camera.<span class="property">window</span>);</span><br><span class="line">            <span class="variable language_">this</span>.<span class="property">_pipelineUBO</span>.<span class="title function_">updateCameraUBO</span>(camera);</span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">let</span> j = <span class="number">0</span>; j &lt; <span class="variable language_">this</span>.<span class="property">_flows</span>.<span class="property">length</span>; j++) &#123;</span><br><span class="line">                <span class="variable language_">this</span>.<span class="property">_flows</span>[j].<span class="title function_">render</span>(camera);  <span class="comment">// ③</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">_commandBuffers</span>[<span class="number">0</span>].<span class="title function_">end</span>();</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">_device</span>.<span class="property">queue</span>.<span class="title function_">submit</span>(<span class="variable language_">this</span>.<span class="property">_commandBuffers</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="1、灯光剔除-validPunctualLightsCulling"><a href="#1、灯光剔除-validPunctualLightsCulling" class="headerlink" title="1、灯光剔除 validPunctualLightsCulling"></a>1、灯光剔除 <code>validPunctualLightsCulling</code></h3><p>从场景的所有点光源、聚光灯、球光源、范围方向光中，筛选出对当前相机可见的光源，存入 <code>sceneData.validPunctualLights</code>，供后续光照计算使用。</p>
+<h3 id="2、场景主剔除-sceneCulling"><a href="#2、场景主剔除-sceneCulling" class="headerlink" title="2、场景主剔除 sceneCulling"></a>2、场景主剔除 <code>sceneCulling</code></h3><p>源码验证（<code>cocos/rendering/scene-culling.ts</code>）：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> <span class="keyword">function</span> <span class="title function_">sceneCulling</span> (<span class="params">sceneData, pipelineUBO, camera</span>): <span class="built_in">void</span> &#123;</span><br><span class="line">    <span class="keyword">const</span> models = scene.<span class="property">models</span>;</span><br><span class="line">    <span class="keyword">const</span> visibility = camera.<span class="property">visibility</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">function</span> <span class="title function_">enqueueRenderObject</span> (<span class="params"><span class="attr">model</span>: <span class="title class_">Model</span></span>): <span class="built_in">void</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (model.<span class="property">enabled</span>) &#123;</span><br><span class="line">            <span class="comment">// LOD 检查</span></span><br><span class="line">            <span class="keyword">if</span> (scene.<span class="title function_">isCulledByLod</span>(camera, model)) <span class="keyword">return</span>;</span><br><span class="line">            <span class="comment">// 收集阴影投射对象</span></span><br><span class="line">            <span class="keyword">if</span> (model.<span class="property">castShadow</span>) &#123;</span><br><span class="line">                castShadowObjects.<span class="title function_">push</span>(...);</span><br><span class="line">                csmLayerObjects.<span class="title function_">push</span>(...);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">// 图层匹配检查</span></span><br><span class="line">            <span class="keyword">if</span> ((model.<span class="property">node</span> &amp;&amp; ((visibility &amp; model.<span class="property">node</span>.<span class="property">layer</span>) === model.<span class="property">node</span>.<span class="property">layer</span>))</span><br><span class="line">                || (visibility &amp; model.<span class="property">visFlags</span>)) &#123;</span><br><span class="line">                <span class="comment">// 视锥体剔除</span></span><br><span class="line">                <span class="keyword">if</span> (model.<span class="property">worldBounds</span> &amp;&amp; !geometry.<span class="property">intersect</span>.<span class="title function_">aabbFrustum</span>(model.<span class="property">worldBounds</span>, camera.<span class="property">frustum</span>)) &#123;</span><br><span class="line">                    <span class="keyword">return</span>;</span><br><span class="line">                &#125;</span><br><span class="line">                renderObjects.<span class="title function_">push</span>(<span class="title function_">getRenderObject</span>(model, camera));</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; models.<span class="property">length</span>; i++) &#123;</span><br><span class="line">        <span class="title function_">enqueueRenderObject</span>(models[i]);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>剔除判断条件依次为：<strong>LOD 级别 → 图层匹配 → 视锥体相交</strong>。通过全部检查的 Model 被放入 <code>renderObjects</code> 数组，进入后续的渲染队列。</p>
+<h2 id="第五步：管线组织-—-Pipeline-→-Flow-→-Stage-→-Queue"><a href="#第五步：管线组织-—-Pipeline-→-Flow-→-Stage-→-Queue" class="headerlink" title="第五步：管线组织 — Pipeline → Flow → Stage → Queue"></a>第五步：管线组织 — Pipeline → Flow → Stage → Queue</h2><p>旧管线采用分层架构：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="title class_">RenderPipeline</span></span><br><span class="line">  └── <span class="title class_">RenderFlow</span>[]        ← 按优先级排列的渲染流程</span><br><span class="line">       └── <span class="title class_">RenderStage</span>[]  ← 每个流程包含多个渲染阶段</span><br><span class="line">            └── <span class="title class_">RenderQueue</span>[] ← 每个阶段包含不透明/透明队列</span><br></pre></td></tr></table></figure>
+
+<h3 id="1、前向管线-ForwardPipeline"><a href="#1、前向管线-ForwardPipeline" class="headerlink" title="1、前向管线 (ForwardPipeline)"></a>1、前向管线 (ForwardPipeline)</h3><p><code>cocos/rendering/forward/forward-pipeline.ts</code> 初始化时注册三个 Flow：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="title function_">initialize</span> (<span class="attr">info</span>: <span class="title class_">IRenderPipelineInfo</span>): <span class="built_in">boolean</span> &#123;</span><br><span class="line">    <span class="variable language_">super</span>.<span class="title function_">initialize</span>(info);</span><br><span class="line">    <span class="keyword">if</span> (<span class="variable language_">this</span>.<span class="property">_flows</span>.<span class="property">length</span> === <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="comment">// 1. 阴影流程（优先级最高）</span></span><br><span class="line">        <span class="keyword">const</span> shadowFlow = <span class="keyword">new</span> <span class="title class_">ShadowFlow</span>();</span><br><span class="line">        shadowFlow.<span class="title function_">initialize</span>(<span class="title class_">ShadowFlow</span>.<span class="property">initInfo</span>);</span><br><span class="line">        <span class="variable language_">this</span>.<span class="property">_flows</span>.<span class="title function_">push</span>(shadowFlow);</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 2. 反射探针流程</span></span><br><span class="line">        <span class="keyword">const</span> reflectionFlow = <span class="keyword">new</span> <span class="title class_">ReflectionProbeFlow</span>();</span><br><span class="line">        reflectionFlow.<span class="title function_">initialize</span>(<span class="title class_">ReflectionProbeFlow</span>.<span class="property">initInfo</span>);</span><br><span class="line">        <span class="variable language_">this</span>.<span class="property">_flows</span>.<span class="title function_">push</span>(reflectionFlow);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 3. 前向渲染主流程</span></span><br><span class="line">        <span class="keyword">const</span> forwardFlow = <span class="keyword">new</span> <span class="title class_">ForwardFlow</span>();</span><br><span class="line">        forwardFlow.<span class="title function_">initialize</span>(<span class="title class_">ForwardFlow</span>.<span class="property">initInfo</span>);</span><br><span class="line">        <span class="variable language_">this</span>.<span class="property">_flows</span>.<span class="title function_">push</span>(forwardFlow);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="2、延迟管线-DeferredPipeline"><a href="#2、延迟管线-DeferredPipeline" class="headerlink" title="2、延迟管线 (DeferredPipeline)"></a>2、延迟管线 (DeferredPipeline)</h3><p><code>cocos/rendering/deferred/deferred-pipeline.ts</code> 注册两个 Flow：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (<span class="variable language_">this</span>.<span class="property">_flows</span>.<span class="property">length</span> === <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="keyword">const</span> shadowFlow = <span class="keyword">new</span> <span class="title class_">ShadowFlow</span>();</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">_flows</span>.<span class="title function_">push</span>(shadowFlow);</span><br><span class="line">    <span class="keyword">const</span> mainFlow = <span class="keyword">new</span> <span class="title class_">MainFlow</span>();  <span class="comment">// 包含 GBuffer 阶段 + 光照阶段</span></span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">_flows</span>.<span class="title function_">push</span>(mainFlow);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3、RenderFlow-的-render-方法"><a href="#3、RenderFlow-的-render-方法" class="headerlink" title="3、RenderFlow 的 render 方法"></a>3、RenderFlow 的 render 方法</h3><p><code>cocos/rendering/render-flow.ts</code> 中，<code>RenderFlow.render()</code> 遍历所有 Stage：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="title function_">render</span> (<span class="attr">camera</span>: <span class="title class_">Camera</span>): <span class="built_in">void</span> &#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>, len = <span class="variable language_">this</span>.<span class="property">_stages</span>.<span class="property">length</span>; i &lt; len; i++) &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="variable language_">this</span>.<span class="property">_stages</span>[i].<span class="property">enabled</span>) <span class="variable language_">this</span>.<span class="property">_stages</span>[i].<span class="title function_">render</span>(camera);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="4、ForwardFlow-的-Stage-组成"><a href="#4、ForwardFlow-的-Stage-组成" class="headerlink" title="4、ForwardFlow 的 Stage 组成"></a>4、ForwardFlow 的 Stage 组成</h3><p>以 <code>ForwardFlow</code> 为例，它只包含一个 <code>ForwardStage</code>：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="title function_">initialize</span> (<span class="attr">info</span>: <span class="title class_">IRenderFlowInfo</span>): <span class="built_in">boolean</span> &#123;</span><br><span class="line">    <span class="variable language_">super</span>.<span class="title function_">initialize</span>(info);</span><br><span class="line">    <span class="keyword">if</span> (<span class="variable language_">this</span>.<span class="property">_stages</span>.<span class="property">length</span> === <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">const</span> forwardStage = <span class="keyword">new</span> <span class="title class_">ForwardStage</span>();</span><br><span class="line">        forwardStage.<span class="title function_">initialize</span>(<span class="title class_">ForwardStage</span>.<span class="property">initInfo</span>);</span><br><span class="line">        <span class="variable language_">this</span>.<span class="property">_stages</span>.<span class="title function_">push</span>(forwardStage);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="5、ShadowFlow-的-Stage-组成"><a href="#5、ShadowFlow-的-Stage-组成" class="headerlink" title="5、ShadowFlow 的 Stage 组成"></a>5、ShadowFlow 的 Stage 组成</h3><p><code>cocos/rendering/shadow/shadow-flow.ts</code> 同样只包含一个 <code>ShadowStage</code>：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="title function_">initialize</span> (<span class="attr">info</span>: <span class="title class_">IRenderFlowInfo</span>): <span class="built_in">boolean</span> &#123;</span><br><span class="line">    <span class="variable language_">super</span>.<span class="title function_">initialize</span>(info);</span><br><span class="line">    <span class="keyword">if</span> (<span class="variable language_">this</span>.<span class="property">_stages</span>.<span class="property">length</span> === <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">const</span> shadowMapStage = <span class="keyword">new</span> <span class="title class_">ShadowStage</span>();</span><br><span class="line">        shadowMapStage.<span class="title function_">initialize</span>(<span class="title class_">ShadowStage</span>.<span class="property">initInfo</span>);</span><br><span class="line">        <span class="variable language_">this</span>.<span class="property">_stages</span>.<span class="title function_">push</span>(shadowMapStage);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="第六步：RenderStage-执行渲染"><a href="#第六步：RenderStage-执行渲染" class="headerlink" title="第六步：RenderStage 执行渲染"></a>第六步：RenderStage 执行渲染</h2><p><code>cocos/rendering/forward/forward-stage.ts</code> 的 <code>ForwardStage.render()</code> 是旧管线最核心的执行逻辑：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="title function_">render</span> (<span class="attr">camera</span>: <span class="title class_">Camera</span>): <span class="built_in">void</span> &#123;</span><br><span class="line">    <span class="comment">// 1. 清空所有 renderQueue</span></span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">_renderQueues</span>.<span class="title function_">forEach</span>(renderQueueClearFunc);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> renderObjects = pipeline.<span class="property">pipelineSceneData</span>.<span class="property">renderObjects</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 2. 遍历 renderObjects，收集 SubModel/Pass</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; renderObjects.<span class="property">length</span>; ++i) &#123;</span><br><span class="line">        <span class="keyword">const</span> ro = renderObjects[i];</span><br><span class="line">        <span class="keyword">const</span> subModels = ro.<span class="property">model</span>.<span class="property">subModels</span>;</span><br><span class="line">        <span class="keyword">for</span> (m = <span class="number">0</span>; m &lt; subModels.<span class="property">length</span>; m++) &#123;</span><br><span class="line">            <span class="keyword">const</span> passes = subModels[m].<span class="property">passes</span>;</span><br><span class="line">            <span class="keyword">for</span> (p = <span class="number">0</span>; p &lt; passes.<span class="property">length</span>; p++) &#123;</span><br><span class="line">                <span class="comment">// 将 Pass 插入对应的 RenderQueue</span></span><br><span class="line">                <span class="keyword">for</span> (k = <span class="number">0</span>; k &lt; <span class="variable language_">this</span>.<span class="property">_renderQueues</span>.<span class="property">length</span>; k++) &#123;</span><br><span class="line">                    <span class="variable language_">this</span>.<span class="property">_renderQueues</span>[k].<span class="title function_">insertRenderPass</span>(ro, m, p);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 3. 排序</span></span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">_renderQueues</span>.<span class="title function_">forEach</span>(renderQueueSortFunc);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 4. 录制命令缓冲</span></span><br><span class="line">    <span class="keyword">const</span> cmdBuff = pipeline.<span class="property">commandBuffers</span>[<span class="number">0</span>];</span><br><span class="line">    <span class="comment">// 不透明队列先渲染</span></span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">_renderQueues</span>[<span class="number">0</span>].<span class="title function_">recordCommandBuffer</span>(device, renderPass, cmdBuff);</span><br><span class="line">    <span class="comment">// 实例化队列</span></span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">_instancedQueue</span>.<span class="title function_">recordCommandBuffer</span>(device, renderPass, cmdBuff);</span><br><span class="line">    <span class="comment">// 附加光源队列</span></span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">_additiveLightQueue</span>.<span class="title function_">recordCommandBuffer</span>(device, renderPass, cmdBuff);</span><br><span class="line">    <span class="comment">// 透明队列后渲染</span></span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">_renderQueues</span>[<span class="number">1</span>].<span class="title function_">recordCommandBuffer</span>(device, renderPass, cmdBuff);</span><br><span class="line">    <span class="comment">// 平面阴影队列</span></span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">_planarQueue</span>.<span class="title function_">recordCommandBuffer</span>(device, renderPass, cmdBuff);</span><br><span class="line">    <span class="comment">// UI 渲染</span></span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">_uiPhase</span>.<span class="title function_">render</span>(camera, renderPass);</span><br><span class="line">    <span class="comment">// Profiler 渲染</span></span><br><span class="line">    <span class="title function_">renderProfiler</span>(device, renderPass, cmdBuff, pipeline.<span class="property">profiler</span>, camera);</span><br><span class="line">    cmdBuff.<span class="title function_">endRenderPass</span>();</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>ForwardStage 初始化时定义了两个 RenderQueue：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="attr">initInfo</span>: <span class="title class_">IRenderStageInfo</span> = &#123;</span><br><span class="line">    <span class="attr">name</span>: <span class="string">&#x27;ForwardStage&#x27;</span>,</span><br><span class="line">    <span class="attr">priority</span>: <span class="title class_">ForwardStagePriority</span>.<span class="property">FORWARD</span>,</span><br><span class="line">    <span class="attr">renderQueues</span>: [</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">isTransparent</span>: <span class="literal">false</span>,</span><br><span class="line">            <span class="attr">sortMode</span>: <span class="title class_">RenderQueueSortMode</span>.<span class="property">FRONT_TO_BACK</span>,   <span class="comment">// 不透明：从前往后</span></span><br><span class="line">            <span class="attr">stages</span>: [<span class="string">&#x27;default&#x27;</span>],</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">isTransparent</span>: <span class="literal">true</span>,</span><br><span class="line">            <span class="attr">sortMode</span>: <span class="title class_">RenderQueueSortMode</span>.<span class="property">BACK_TO_FRONT</span>,   <span class="comment">// 透明：从后往前</span></span><br><span class="line">            <span class="attr">stages</span>: [<span class="string">&#x27;default&#x27;</span>, <span class="string">&#x27;planarShadow&#x27;</span>],</span><br><span class="line">        &#125;,</span><br><span class="line">    ],</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h2 id="第七步：RenderQueue-排序与录制"><a href="#第七步：RenderQueue-排序与录制" class="headerlink" title="第七步：RenderQueue 排序与录制"></a>第七步：RenderQueue 排序与录制</h2><p><code>cocos/rendering/render-queue.ts</code> 的 <code>RenderQueue</code> 负责 Pass 的排序和命令录制：</p>
+<h3 id="1、插入-Pass"><a href="#1、插入-Pass" class="headerlink" title="1、插入 Pass"></a>1、插入 Pass</h3><figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="title function_">insertRenderPass</span> (renderObj, subModelIdx, passIdx): <span class="built_in">boolean</span> &#123;</span><br><span class="line">    <span class="keyword">const</span> subModel = renderObj.<span class="property">model</span>.<span class="property">subModels</span>[subModelIdx];</span><br><span class="line">    <span class="keyword">const</span> pass = subModel.<span class="property">passes</span>[passIdx];</span><br><span class="line">    <span class="keyword">const</span> isTransparent = pass.<span class="property">blendState</span>.<span class="property">targets</span>[<span class="number">0</span>].<span class="property">blend</span>;</span><br><span class="line">    <span class="comment">// 过滤：透明/不透明类型必须匹配，且 Pass 的 phase 必须在队列允许的范围内</span></span><br><span class="line">    <span class="keyword">if</span> (isTransparent !== <span class="variable language_">this</span>.<span class="property">_passDesc</span>.<span class="property">isTransparent</span> || !(pass.<span class="property">phase</span> &amp; <span class="variable language_">this</span>.<span class="property">_passDesc</span>.<span class="property">phases</span>)) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 生成 hash：pass.priority + subModel.priority + passIdx</span></span><br><span class="line">    <span class="keyword">const</span> hash = (<span class="number">0</span> &lt;&lt; <span class="number">30</span>) | (pass.<span class="property">priority</span> &lt;&lt; <span class="number">16</span>) | (subModel.<span class="property">priority</span> &lt;&lt; <span class="number">8</span>) | passIdx;</span><br><span class="line">    <span class="comment">// 插入队列</span></span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">queue</span>.<span class="title function_">push</span>(&#123; subModel, passIdx, hash, depth &#125;);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="2、排序"><a href="#2、排序" class="headerlink" title="2、排序"></a>2、排序</h3><figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> <span class="keyword">function</span> <span class="title function_">renderQueueSortFunc</span> (<span class="params"><span class="attr">rq</span>: <span class="title class_">RenderQueue</span></span>): <span class="built_in">void</span> &#123;</span><br><span class="line">    rq.<span class="title function_">sort</span>();  <span class="comment">// 按 hash 排序，同状态尽量合并</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3、录制命令缓冲"><a href="#3、录制命令缓冲" class="headerlink" title="3、录制命令缓冲"></a>3、录制命令缓冲</h3><figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="title function_">recordCommandBuffer</span> (device, renderPass, cmdBuff): <span class="built_in">void</span> &#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; <span class="variable language_">this</span>.<span class="property">queue</span>.<span class="property">length</span>; ++i) &#123;</span><br><span class="line">        <span class="keyword">const</span> &#123; subModel, passIdx &#125; = <span class="variable language_">this</span>.<span class="property">queue</span>.<span class="property">array</span>[i];</span><br><span class="line">        <span class="keyword">const</span> &#123; inputAssembler &#125; = subModel;</span><br><span class="line">        <span class="keyword">const</span> pass = subModel.<span class="property">passes</span>[passIdx];</span><br><span class="line">        <span class="keyword">const</span> shader = subModel.<span class="property">shaders</span>[passIdx];</span><br><span class="line">        <span class="comment">// 创建或获取 PSO</span></span><br><span class="line">        <span class="keyword">const</span> pso = <span class="title class_">PipelineStateManager</span>.<span class="title function_">getOrCreatePipelineState</span>(device, pass, shader, renderPass, inputAssembler);</span><br><span class="line">        <span class="comment">// 绑定流水线状态</span></span><br><span class="line">        cmdBuff.<span class="title function_">bindPipelineState</span>(pso);</span><br><span class="line">        <span class="comment">// 绑定材质描述符集</span></span><br><span class="line">        cmdBuff.<span class="title function_">bindDescriptorSet</span>(<span class="title class_">SetIndex</span>.<span class="property">MATERIAL</span>, pass.<span class="property">descriptorSet</span>);</span><br><span class="line">        <span class="comment">// 绑定本地描述符集</span></span><br><span class="line">        cmdBuff.<span class="title function_">bindDescriptorSet</span>(<span class="title class_">SetIndex</span>.<span class="property">LOCAL</span>, subModel.<span class="property">descriptorSet</span>);</span><br><span class="line">        <span class="comment">// 绑定输入汇集器</span></span><br><span class="line">        cmdBuff.<span class="title function_">bindInputAssembler</span>(inputAssembler);</span><br><span class="line">        <span class="comment">// 执行绘制</span></span><br><span class="line">        cmdBuff.<span class="title function_">draw</span>(inputAssembler);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="重要文件汇总"><a href="#重要文件汇总" class="headerlink" title="重要文件汇总"></a>重要文件汇总</h2><table>
+<thead>
+<tr>
+<th align="left">文件</th>
+<th align="left">含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><code>native/cocos/engine/Engine.cpp</code></td>
+<td align="left">原生平台帧循环入口，<code>Engine::tick()</code></td>
+</tr>
+<tr>
+<td align="left"><code>cocos/game/game.ts</code></td>
+<td align="left">Web 平台帧循环入口，<code>Game._updateCallback()</code></td>
+</tr>
+<tr>
+<td align="left"><code>cocos/game/director.ts</code></td>
+<td align="left">主循环调度器，拆分更新阶段和渲染阶段</td>
+</tr>
+<tr>
+<td align="left"><code>cocos/root.ts</code></td>
+<td align="left">渲染系统顶层管理器，持有设备、窗口、管线、场景</td>
+</tr>
+<tr>
+<td align="left"><code>cocos/rendering/render-pipeline.ts</code></td>
+<td align="left">旧管线基类，定义 Pipeline → Flow → Stage 框架</td>
+</tr>
+<tr>
+<td align="left"><code>cocos/rendering/render-flow.ts</code></td>
+<td align="left">RenderFlow 基类，遍历 Stage 执行渲染</td>
+</tr>
+<tr>
+<td align="left"><code>cocos/rendering/render-stage.ts</code></td>
+<td align="left">RenderStage 抽象基类，定义 render 接口</td>
+</tr>
+<tr>
+<td align="left"><code>cocos/rendering/scene-culling.ts</code></td>
+<td align="left">场景剔除：灯光、阴影、主场景可见性筛选</td>
+</tr>
+<tr>
+<td align="left"><code>cocos/rendering/render-queue.ts</code></td>
+<td align="left">RenderQueue：Pass 插入、排序、命令缓冲录制</td>
+</tr>
+<tr>
+<td align="left"><code>cocos/rendering/forward/forward-pipeline.ts</code></td>
+<td align="left">前向管线，Flow &#x3D; [Shadow, Reflection, Forward]</td>
+</tr>
+<tr>
+<td align="left"><code>cocos/rendering/forward/forward-flow.ts</code></td>
+<td align="left">前向渲染流程</td>
+</tr>
+<tr>
+<td align="left"><code>cocos/rendering/forward/forward-stage.ts</code></td>
+<td align="left">前向渲染阶段，核心渲染逻辑</td>
+</tr>
+<tr>
+<td align="left"><code>cocos/rendering/deferred/deferred-pipeline.ts</code></td>
+<td align="left">延迟管线，Flow &#x3D; [Shadow, Main]</td>
+</tr>
+<tr>
+<td align="left"><code>cocos/rendering/shadow/shadow-flow.ts</code></td>
+<td align="left">阴影渲染流程</td>
+</tr>
+</tbody></table>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>Cocos 旧管线的一帧渲染，从 <code>Engine::tick()</code> 或 <code>Game._updateCallback()</code> 开始，经过七层调用最终到达 GPU：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="title class_">Engine</span>::<span class="title function_">tick</span>() / <span class="title class_">Game</span>.<span class="title function_">_updateCallback</span>()</span><br><span class="line">  → <span class="title class_">Director</span>.<span class="title function_">tick</span>()            ← 拆分更新与渲染</span><br><span class="line">    → <span class="title class_">Root</span>.<span class="title function_">frameMove</span>()          ← 管理场景、相机、管线</span><br><span class="line">      → <span class="title class_">Pipeline</span>.<span class="title function_">render</span>()       ← 对每个相机做剔除 + 遍历 <span class="title class_">Flow</span></span><br><span class="line">        → <span class="title class_">RenderFlow</span>.<span class="title function_">render</span>()   ← 遍历 <span class="title class_">Stage</span></span><br><span class="line">          → <span class="title class_">RenderStage</span>.<span class="title function_">render</span>()← 收集 <span class="title class_">SubModel</span>/<span class="title class_">Pass</span> → 排序 → 录制</span><br><span class="line">            → <span class="title class_">RenderQueue</span>.<span class="title function_">recordCommandBuffer</span>()</span><br><span class="line">              → <span class="variable constant_">GPU</span> <span class="title class_">DrawCall</span></span><br></pre></td></tr></table></figure>
+
+<p>前向管线（ForwardPipeline）和延迟管线（DeferredPipeline）的区别在于 Flow 的组合不同，但底层都遵循相同的 Pipeline → Flow → Stage → Queue 分层架构。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/cocos/" rel="tag"># cocos</a>
+              <a href="/tags/RenderScene/" rel="tag"># RenderScene</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/08/27/Cocos%E6%96%B0%E7%AE%A1%E7%BA%BF%E4%B8%80%E5%B8%A7%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B%EF%BC%9ARenderGraph%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/" rel="prev" title="Cocos新管线一帧渲染流程：RenderGraph架构解析">
+                  <i class="fa fa-angle-left"></i> Cocos新管线一帧渲染流程：RenderGraph架构解析
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/09/09/Cocos%E5%BC%95%E6%93%8ERenderScene%E6%A8%A1%E5%9E%8B%E7%AE%A1%E7%90%86/" rel="next" title="Cocos引擎RenderScene模型管理">
+                  Cocos引擎RenderScene模型管理 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">MagicX</span>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+</body>
+</html>
