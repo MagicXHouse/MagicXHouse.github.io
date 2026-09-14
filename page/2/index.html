@@ -142,13 +142,13 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">8</span>
+          <span class="site-state-item-count">9</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/categories/">
-        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-count">6</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">
@@ -178,6 +178,102 @@
     </div>
 
     <div class="main-inner index posts-expand">
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://magicxhouse.github.io/2026/08/27/cocos%E6%BA%90%E7%A0%81%E7%AC%94%E8%AE%B0/%E6%95%B0%E6%8D%AE%E6%B5%81/Cocos%E6%96%B0%E7%AE%A1%E7%BA%BF%E4%B8%80%E5%B8%A7%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B%EF%BC%9ARenderGraph%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/touxiang.jpg">
+      <meta itemprop="name" content="MagicX">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="MagicX Story">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content=" | MagicX Story">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2026/08/27/cocos%E6%BA%90%E7%A0%81%E7%AC%94%E8%AE%B0/%E6%95%B0%E6%8D%AE%E6%B5%81/Cocos%E6%96%B0%E7%AE%A1%E7%BA%BF%E4%B8%80%E5%B8%A7%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B%EF%BC%9ARenderGraph%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/" class="post-title-link" itemprop="url">Cocos新管线一帧渲染流程：RenderGraph架构解析</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2026-08-27 18:21:04" itemprop="dateCreated datePublished" datetime="2026-08-27T18:21:04+08:00">2026-08-27</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">Edited on</span>
+      <time title="Modified: 2026-09-09 17:54:57" itemprop="dateModified" datetime="2026-09-09T17:54:57+08:00">2026-09-09</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/cocos%E6%BA%90%E7%A0%81%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">cocos源码笔记</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/cocos%E6%BA%90%E7%A0%81%E7%AC%94%E8%AE%B0/%E6%95%B0%E6%8D%AE%E6%B5%81/" itemprop="url" rel="index"><span itemprop="name">数据流</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <p>本文讲新管线（Custom Pipeline）的一帧渲染逻辑，它用RenderGraph替换了旧管线的固定层次，让开发者以声明式的方式构建渲染流程。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2026/08/27/cocos%E6%BA%90%E7%A0%81%E7%AC%94%E8%AE%B0/%E6%95%B0%E6%8D%AE%E6%B5%81/Cocos%E6%96%B0%E7%AE%A1%E7%BA%BF%E4%B8%80%E5%B8%A7%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B%EF%BC%9ARenderGraph%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
 
     
 
