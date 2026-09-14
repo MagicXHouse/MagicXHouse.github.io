@@ -25,7 +25,7 @@
     <meta name="description" content="本文讲新管线（Custom Pipeline）的一帧渲染逻辑，它用RenderGraph替换了旧管线的固定层次，让开发者以声明式的方式构建渲染流程。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Cocos新管线一帧渲染流程：RenderGraph架构解析">
-<meta property="og:url" content="https://magicxhouse.github.io/2026/08/27/Cocos%E6%96%B0%E7%AE%A1%E7%BA%BF%E4%B8%80%E5%B8%A7%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B%EF%BC%9ARenderGraph%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/index.html">
+<meta property="og:url" content="https://magicxhouse.github.io/2026/08/27/cocos%E6%BA%90%E7%A0%81%E7%AC%94%E8%AE%B0/%E6%95%B0%E6%8D%AE%E6%B5%81/Cocos%E6%96%B0%E7%AE%A1%E7%BA%BF%E4%B8%80%E5%B8%A7%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B%EF%BC%9ARenderGraph%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/index.html">
 <meta property="og:site_name" content="MagicX Story">
 <meta property="og:description" content="本文讲新管线（Custom Pipeline）的一帧渲染逻辑，它用RenderGraph替换了旧管线的固定层次，让开发者以声明式的方式构建渲染流程。">
 <meta property="og:locale" content="en_US">
@@ -36,10 +36,10 @@
 <meta name="twitter:card" content="summary">
 
 
-<link rel="canonical" href="https://magicxhouse.github.io/2026/08/27/Cocos%E6%96%B0%E7%AE%A1%E7%BA%BF%E4%B8%80%E5%B8%A7%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B%EF%BC%9ARenderGraph%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/">
+<link rel="canonical" href="https://magicxhouse.github.io/2026/08/27/cocos%E6%BA%90%E7%A0%81%E7%AC%94%E8%AE%B0/%E6%95%B0%E6%8D%AE%E6%B5%81/Cocos%E6%96%B0%E7%AE%A1%E7%BA%BF%E4%B8%80%E5%B8%A7%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B%EF%BC%9ARenderGraph%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/">
 
 
-<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://magicxhouse.github.io/2026/08/27/Cocos%E6%96%B0%E7%AE%A1%E7%BA%BF%E4%B8%80%E5%B8%A7%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B%EF%BC%9ARenderGraph%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/","path":"2026/08/27/Cocos新管线一帧渲染流程：RenderGraph架构解析/","title":"Cocos新管线一帧渲染流程：RenderGraph架构解析"}</script>
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://magicxhouse.github.io/2026/08/27/cocos%E6%BA%90%E7%A0%81%E7%AC%94%E8%AE%B0/%E6%95%B0%E6%8D%AE%E6%B5%81/Cocos%E6%96%B0%E7%AE%A1%E7%BA%BF%E4%B8%80%E5%B8%A7%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B%EF%BC%9ARenderGraph%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/","path":"2026/08/27/cocos源码笔记/数据流/Cocos新管线一帧渲染流程：RenderGraph架构解析/","title":"Cocos新管线一帧渲染流程：RenderGraph架构解析"}</script>
 
 <script class="next-config" data-name="calendar" type="application/json">""</script>
 <title>Cocos新管线一帧渲染流程：RenderGraph架构解析 | MagicX Story</title>
@@ -148,18 +148,18 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">7</span>
+          <span class="site-state-item-count">8</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/categories/">
-        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-count">5</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/tags/">
-        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-count">3</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
@@ -194,7 +194,7 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
-    <link itemprop="mainEntityOfPage" href="https://magicxhouse.github.io/2026/08/27/Cocos%E6%96%B0%E7%AE%A1%E7%BA%BF%E4%B8%80%E5%B8%A7%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B%EF%BC%9ARenderGraph%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/">
+    <link itemprop="mainEntityOfPage" href="https://magicxhouse.github.io/2026/08/27/cocos%E6%BA%90%E7%A0%81%E7%AC%94%E8%AE%B0/%E6%95%B0%E6%8D%AE%E6%B5%81/Cocos%E6%96%B0%E7%AE%A1%E7%BA%BF%E4%B8%80%E5%B8%A7%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B%EF%BC%9ARenderGraph%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/touxiang.jpg">
@@ -433,12 +433,12 @@
 
           <div class="post-nav">
             <div class="post-nav-item">
-                <a href="/2026/08/25/Cocos%20GFX%E6%8A%BD%E8%B1%A1%E5%B1%82/" rel="prev" title="Cocos GFX抽象层">
+                <a href="/2026/08/25/cocos%E6%BA%90%E7%A0%81%E7%AC%94%E8%AE%B0/GFX%E5%B1%82/Cocos%20GFX%E6%8A%BD%E8%B1%A1%E5%B1%82/" rel="prev" title="Cocos GFX抽象层">
                   <i class="fa fa-angle-left"></i> Cocos GFX抽象层
                 </a>
             </div>
             <div class="post-nav-item">
-                <a href="/2026/08/29/Cocos%E6%97%A7%E7%AE%A1%E7%BA%BF%E4%B8%80%E5%B8%A7%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B%EF%BC%9A%E4%BB%8E%20Enginetick()%E5%88%B0DrawCall/" rel="next" title="Cocos旧管线一帧渲染流程：从 Enginetick()到DrawCall">
+                <a href="/2026/08/29/cocos%E6%BA%90%E7%A0%81%E7%AC%94%E8%AE%B0/%E6%95%B0%E6%8D%AE%E6%B5%81/Cocos%E6%97%A7%E7%AE%A1%E7%BA%BF%E4%B8%80%E5%B8%A7%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B%EF%BC%9A%E4%BB%8E%20Enginetick()%E5%88%B0DrawCall/" rel="next" title="Cocos旧管线一帧渲染流程：从 Enginetick()到DrawCall">
                   Cocos旧管线一帧渲染流程：从 Enginetick()到DrawCall <i class="fa fa-angle-right"></i>
                 </a>
             </div>
