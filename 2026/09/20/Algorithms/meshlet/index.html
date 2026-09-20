@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/themes/blue/pace-theme-minimal.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous" defer></script>
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"magicxhouse.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.29.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":"mac"},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="本文介绍了meshlet的概念、作用以及作者自制微引擎的case。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="meshlet">
+<meta property="og:url" content="https://magicxhouse.github.io/2026/09/20/Algorithms/meshlet/index.html">
+<meta property="og:site_name" content="MagicX Story">
+<meta property="og:description" content="本文介绍了meshlet的概念、作用以及作者自制微引擎的case。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://magicxhouse.github.io/images/20260920/image-20260920115920803.png">
+<meta property="og:image" content="https://magicxhouse.github.io/images/20260920/image-20260920115729375.png">
+<meta property="article:published_time" content="2026-09-20T03:50:46.000Z">
+<meta property="article:modified_time" content="2026-09-20T04:01:49.926Z">
+<meta property="article:author" content="MagicX">
+<meta property="article:tag" content="algorithms">
+<meta property="article:tag" content="meshlet">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://magicxhouse.github.io/images/20260920/image-20260920115920803.png">
+
+
+<link rel="canonical" href="https://magicxhouse.github.io/2026/09/20/Algorithms/meshlet/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://magicxhouse.github.io/2026/09/20/Algorithms/meshlet/","path":"2026/09/20/Algorithms/meshlet/","title":"meshlet"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>meshlet | MagicX Story</title>
+  
+
+
+
+
+
+
+
+
+  
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/11.10.1/mermaid.min.js","integrity":"sha256-BmQmdWDS8X2OTbrwELWK366LV6escyWhHHe0XCTU/Hk="}}</script>
+  <script src="/js/third-party/tags/mermaid.js" defer></script>
+
+
+
+  <script src="/js/third-party/pace.js" defer></script>
+
+
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">MagicX Story</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Meshlet-%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9F%E4%B8%BA%E4%BB%80%E4%B9%88-GPU-%E6%B8%B2%E6%9F%93%E9%9C%80%E8%A6%81%E6%8A%8A%E4%B8%89%E8%A7%92%E5%BD%A2%E2%80%9D%E5%88%87%E5%9D%97%E2%80%9D%EF%BC%9F"><span class="nav-number">1.</span> <span class="nav-text">Meshlet 是什么？为什么 GPU 渲染需要把三角形”切块”？</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E5%89%94%E9%99%A4%E7%9A%84%E5%9B%B0%E5%A2%83%EF%BC%9A%E5%A4%AA%E7%B2%97%E4%B8%8D%E8%A1%8C%EF%BC%8C%E5%A4%AA%E7%BB%86%E4%B9%9F%E4%B8%8D%E8%A1%8C"><span class="nav-number">1.1.</span> <span class="nav-text">一、剔除的困境：太粗不行，太细也不行</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%96%B9%E6%A1%88-A%EF%BC%9A%E6%95%B4%E5%AF%B9%E8%B1%A1%E5%89%94%E9%99%A4%EF%BC%88%E5%A4%AA%E7%B2%97%EF%BC%89"><span class="nav-number">1.1.1.</span> <span class="nav-text">方案 A：整对象剔除（太粗）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%96%B9%E6%A1%88-B%EF%BC%9A%E9%80%90%E4%B8%89%E8%A7%92%E5%BD%A2%E5%89%94%E9%99%A4%EF%BC%88%E5%A4%AA%E7%BB%86%EF%BC%89"><span class="nav-number">1.1.2.</span> <span class="nav-text">方案 B：逐三角形剔除（太细）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%96%B9%E6%A1%88-C%EF%BC%9AMeshlet-%E2%80%94%E2%80%94-%E6%89%BE%E4%B8%80%E4%B8%AA%E4%B8%AD%E9%97%B4%E9%A2%97%E7%B2%92%E5%BA%A6"><span class="nav-number">1.1.3.</span> <span class="nav-text">方案 C：Meshlet —— 找一个中间颗粒度</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E4%B8%80%E4%B8%AA%E5%BD%A2%E8%B1%A1%E7%9A%84%E6%AF%94%E5%96%BB"><span class="nav-number">1.2.</span> <span class="nav-text">二、一个形象的比喻</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81Case05-%E9%87%8C%E7%9A%84-Meshlet-%E7%AE%97%E6%B3%95%EF%BC%9A%E8%B4%AA%E5%BF%83-BFS-%E5%8C%BA%E5%9F%9F%E5%A2%9E%E9%95%BF"><span class="nav-number">1.3.</span> <span class="nav-text">三、Case05 里的 Meshlet 算法：贪心 BFS 区域增长</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC-1-%E6%AD%A5%EF%BC%9A%E5%BB%BA%E9%82%BB%E6%8E%A5%E8%A1%A8%EF%BC%88%E8%B0%81%E5%92%8C%E8%B0%81%E5%85%B1%E4%BA%AB%E4%B8%80%E6%9D%A1%E8%BE%B9%EF%BC%89"><span class="nav-number">1.3.1.</span> <span class="nav-text">第 1 步：建邻接表（谁和谁共享一条边）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC-2-%E6%AD%A5%EF%BC%9A%E8%B4%AA%E5%BF%83-BFS-%E5%88%87%E5%9D%97%EF%BC%88%E6%A0%B8%E5%BF%83%EF%BC%89"><span class="nav-number">1.3.2.</span> <span class="nav-text">第 2 步：贪心 BFS 切块（核心）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC-3-%E6%AD%A5%EF%BC%9A%E7%AE%97%E5%89%94%E9%99%A4%E4%BF%A1%E6%81%AF%EF%BC%88%E5%8C%85%E5%9B%B4%E7%90%83-%E6%B3%95%E7%BA%BF%E9%94%A5%EF%BC%89"><span class="nav-number">1.3.3.</span> <span class="nav-text">第 3 步：算剔除信息（包围球 + 法线锥）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC-4-%E6%AD%A5%EF%BC%9A%E8%BE%93%E5%87%BA"><span class="nav-number">1.3.4.</span> <span class="nav-text">第 4 步：输出</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E5%88%87%E5%AE%8C%E4%B9%8B%E5%90%8E%EF%BC%8CGPU-%E6%80%8E%E4%B9%88%E7%94%A8%E8%BF%99%E4%BA%9B-meshlet%EF%BC%9F"><span class="nav-number">1.4.</span> <span class="nav-text">四、切完之后，GPU 怎么用这些 meshlet？</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="MagicX"
+      src="/images/touxiang.jpg">
+  <p class="site-author-name" itemprop="name">MagicX</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">12</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/MagicXHouse" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;MagicXHouse" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:xiaojianhang001@gmail.com" title="E-Mail → mailto:xiaojianhang001@gmail.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://magicxhouse.github.io/2026/09/20/Algorithms/meshlet/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/touxiang.jpg">
+      <meta itemprop="name" content="MagicX">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="MagicX Story">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="meshlet | MagicX Story">
+      <meta itemprop="description" content="本文介绍了meshlet的概念、作用以及作者自制微引擎的case。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          meshlet
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
+
+      <time title="Created: 2026-09-20 11:50:46 / Modified: 12:01:49" itemprop="dateCreated datePublished" datetime="2026-09-20T11:50:46+08:00">2026-09-20</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E5%BC%95%E6%93%8E%E7%AE%97%E6%B3%95/" itemprop="url" rel="index"><span itemprop="name">引擎算法</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+            <div class="post-description">本文介绍了meshlet的概念、作用以及作者自制微引擎的case。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><h1 id="Meshlet-是什么？为什么-GPU-渲染需要把三角形”切块”？"><a href="#Meshlet-是什么？为什么-GPU-渲染需要把三角形”切块”？" class="headerlink" title="Meshlet 是什么？为什么 GPU 渲染需要把三角形”切块”？"></a>Meshlet 是什么？为什么 GPU 渲染需要把三角形”切块”？</h1><blockquote>
+<p>从一个真实场景讲起：假设你要渲染一片 78 万个三角形的地面，相机只看得到其中一小块。你当然希望”看不到的三角形就别画了”。但问题是——<strong>你以多大的颗粒度去判断”看得到还是看不到”？</strong> 这个问题的答案，就是 meshlet 存在的原因。</p>
+<p>这个场景我放到自制微引擎case5，可以直接clone下来运行：</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/MagicXHouse/MagicXEngine/tree/main/cases">https://github.com/MagicXHouse/MagicXEngine/tree/main/cases</a></p>
+</blockquote>
+<p>case 5可以直观看到meshlet的剔除效率。</p>
+<p>打开meshlet前，帧率300FPS+：</p>
+<p><img src="/images/20260920/image-20260920115920803.png" alt="image-20260920115920803"></p>
+<p>打开meshlet后，帧率1000FPS+：</p>
+<p><img src="/images/20260920/image-20260920115729375.png" alt="image-20260920115729375"></p>
+<h2 id="一、剔除的困境：太粗不行，太细也不行"><a href="#一、剔除的困境：太粗不行，太细也不行" class="headerlink" title="一、剔除的困境：太粗不行，太细也不行"></a>一、剔除的困境：太粗不行，太细也不行</h2><p>在渲染里，“剔除”（culling）的意思是：把屏幕上根本看不见的东西提前丢掉，不浪费显卡算力。判断的标准通常有两条：<strong>视锥剔除</strong>（在相机视野外吗？）和<strong>背面剔除</strong>（朝向相机的背面吗？）。</p>
+<p>关键问题来了：<strong>拿多大的一块去判断？</strong></p>
+<h3 id="方案-A：整对象剔除（太粗）"><a href="#方案-A：整对象剔除（太粗）" class="headerlink" title="方案 A：整对象剔除（太粗）"></a>方案 A：整对象剔除（太粗）</h3><p>传统做法是按”对象”来。比如这个场景里，地面被拆成了 625 个小方块（patch），每个方块 1250 个三角形。CPU 每一帧给每个方块算一个包围球，判断它是否在相机视野外。</p>
+<p>问题在于：<strong>一个 patch 太大了</strong>。只要一个方块的包围球和视野沾了一点边，哪怕实际上只有 1 个三角形可见，整块 1250 个三角形都得画。相机贴近地面的时候，几乎每个方块都”沾边”，结果就是——<strong>根本剔不掉多少，78 万三角形照样全画</strong>。</p>
+<h3 id="方案-B：逐三角形剔除（太细）"><a href="#方案-B：逐三角形剔除（太细）" class="headerlink" title="方案 B：逐三角形剔除（太细）"></a>方案 B：逐三角形剔除（太细）</h3><p>那干脆逐个三角形判断？78 万个三角形，每帧在 CPU 上逐个算视野，CPU 会先累死。而且 GPU 也不喜欢这种”一个三角形一条指令”的零碎任务——它喜欢<strong>批量、连续</strong>地工作。</p>
+<h3 id="方案-C：Meshlet-——-找一个中间颗粒度"><a href="#方案-C：Meshlet-——-找一个中间颗粒度" class="headerlink" title="方案 C：Meshlet —— 找一个中间颗粒度"></a>方案 C：Meshlet —— 找一个中间颗粒度</h3><p><strong>Meshlet（网格簇）就是把一大片三角形，切成一个个”小包裹”，每个包裹里装几十个三角形。</strong> 剔除时以”包裹”为单位：整个包裹在视野外就整个丢掉，在视野内就整个留下。</p>
+<p>这样：</p>
+<ul>
+<li>颗粒度足够细，能真正剔除掉大量看不见的三角形；</li>
+<li>又足够粗，一个包裹几百个顶点、几十个三角形，交给 GPU 批量处理不浪费。</li>
+</ul>
+<p>一句话概括：</p>
+<blockquote>
+<p><strong>Meshlet 是在”逐对象太粗”和”逐三角形太细”之间，找到的一个黄金颗粒度。</strong></p>
+</blockquote>
+<h2 id="二、一个形象的比喻"><a href="#二、一个形象的比喻" class="headerlink" title="二、一个形象的比喻"></a>二、一个形象的比喻</h2><p>把整个场景想象成一张巨大的城市地图，三角形就是地图上的每一栋小房子。</p>
+<ul>
+<li><strong>传统逐对象剔除</strong>：按”区”来扔地图，一个区 1000 栋房子。你站在一个区边上，哪怕只看到这个区 1 栋房子，也得把整个区 1000 栋房子都打印出来。浪费。</li>
+<li><strong>Meshlet</strong>：把地图预先切成一块块”街区”，每块几十栋房子。你只需要打印视野内（或部分在视野内）的街区，视野外的街区整块丢掉。省一大半纸。</li>
+</ul>
+<p>而”怎么切街区”——这就是 meshlet 生成算法要解决的问题。</p>
+<h2 id="三、Case05-里的-Meshlet-算法：贪心-BFS-区域增长"><a href="#三、Case05-里的-Meshlet-算法：贪心-BFS-区域增长" class="headerlink" title="三、Case05 里的 Meshlet 算法：贪心 BFS 区域增长"></a>三、Case05 里的 Meshlet 算法：贪心 BFS 区域增长</h2><p>我用一个真实项目（MagicXEngine 的 Case05）来讲这个算法。它的输入是一整片 78 万三角形的地面，输出是约 8000 个 meshlet。</p>
+<p>整体思路只有三句话：</p>
+<ol>
+<li><strong>先建邻接表</strong>：搞清楚”谁和谁挨着”。</li>
+<li><strong>贪心 BFS 切块</strong>：从一个三角形出发，沿着”共享边”把邻居一个个拉进来，直到装不下。</li>
+<li><strong>算剔除信息</strong>：给每块算一个包围球 + 一个法线锥，供 GPU 剔除用。</li>
+</ol>
+<p>下面逐步拆开。</p>
+<h3 id="第-1-步：建邻接表（谁和谁共享一条边）"><a href="#第-1-步：建邻接表（谁和谁共享一条边）" class="headerlink" title="第 1 步：建邻接表（谁和谁共享一条边）"></a>第 1 步：建邻接表（谁和谁共享一条边）</h3><p>遍历所有三角形，把每条边登记到”这条边被哪些三角形共享”的映射表里：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">std::unordered_map&lt;Edge, std::vector&lt;<span class="type">uint32_t</span>&gt;&gt; edgeTris;</span><br><span class="line"><span class="keyword">for</span> (<span class="type">uint32_t</span> t = <span class="number">0</span>; t &lt; triCount; ++t) &#123;</span><br><span class="line">    edgeTris[<span class="built_in">MakeEdge</span>(i0, i1)].<span class="built_in">push_back</span>(t);  <span class="comment">// 三角形 t 的 3 条边</span></span><br><span class="line">    edgeTris[<span class="built_in">MakeEdge</span>(i1, i2)].<span class="built_in">push_back</span>(t);</span><br><span class="line">    edgeTris[<span class="built_in">MakeEdge</span>(i2, i0)].<span class="built_in">push_back</span>(t);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>MakeEdge</code> 有个小技巧：把两个顶点索引 <code>swap</code> 成”小的在前”再打包成一个 64 位整数，这样 <code>(v0, v1)</code> 和 <code>(v1, v0)</code> 会被识别成<strong>同一条边</strong>。</p>
+<blockquote>
+<p><strong>为什么按”边”找邻居，而不是按”顶点”？</strong> 因为一个顶点周围可能放射出几十个三角形，按顶点扩展会把簇拉成不紧凑的”扇形”。而按边扩展，两个三角形必须实实在在贴着一条边才算邻居，簇才会长成<strong>连成一片的紧凑块</strong>。</p>
+</blockquote>
+<h3 id="第-2-步：贪心-BFS-切块（核心）"><a href="#第-2-步：贪心-BFS-切块（核心）" class="headerlink" title="第 2 步：贪心 BFS 切块（核心）"></a>第 2 步：贪心 BFS 切块（核心）</h3><p>扫所有三角形，遇到还没被分配的，就把它当<strong>种子</strong>，开一个新的 meshlet，用队列做 BFS 往外”长”：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">std::queue&lt;<span class="type">uint32_t</span>&gt; q;</span><br><span class="line">q.<span class="built_in">push</span>(seed);                          <span class="comment">// 种子三角形入队</span></span><br><span class="line"><span class="keyword">while</span> (!q.<span class="built_in">empty</span>()) &#123;</span><br><span class="line">    <span class="type">const</span> <span class="type">uint32_t</span> t = q.<span class="built_in">front</span>(); q.<span class="built_in">pop</span>();   <span class="comment">// 出队一个三角形</span></span><br><span class="line">    <span class="keyword">if</span> (used[t]) <span class="keyword">continue</span>;                    <span class="comment">// 已被收过，跳过</span></span><br><span class="line">    <span class="keyword">if</span> (tris.<span class="built_in">size</span>() &gt;= maxTris) <span class="keyword">break</span>;        <span class="comment">// 三角形数到上限，本块结束</span></span><br><span class="line">    <span class="keyword">if</span> (!<span class="built_in">wouldFit</span>(t)) <span class="keyword">continue</span>;               <span class="comment">// 会超顶点上限，留给下一块</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">commit</span>(t);                                <span class="comment">// 正式收进当前簇</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 沿 t 的 3 条边，把&quot;共享边且放得下&quot;的邻居三角形入队</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> k = <span class="number">0</span>; k &lt; <span class="number">3</span>; ++k) &#123;</span><br><span class="line">        <span class="type">const</span> Edge e = <span class="built_in">MakeEdge</span>(mesh.indices[t*<span class="number">3</span>+k], mesh.indices[t*<span class="number">3</span>+(k<span class="number">+1</span>)%<span class="number">3</span>]);</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">uint32_t</span> n : edgeTris[e]) &#123;</span><br><span class="line">            <span class="keyword">if</span> (!used[n] &amp;&amp; <span class="built_in">wouldFit</span>(n)) q.<span class="built_in">push</span>(n);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>两个上限（对应 mesh shader 的硬件惯例）：</p>
+<ul>
+<li><strong>maxVerts &#x3D; 64</strong>：一个簇最多 64 个<strong>唯一顶点</strong>；</li>
+<li><strong>maxTris &#x3D; 126</strong>：一个簇最多 126 个三角形。</li>
+</ul>
+<p>这里藏着一个 meshlet 的核心收益——<strong>顶点复用</strong>。相邻三角形共享顶点，所以 <code>wouldFit</code> 判断”加入这个三角形会引入几个<strong>新</strong>顶点”：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> wouldFit = [&amp;](<span class="type">uint32_t</span> t) &#123;</span><br><span class="line">    <span class="type">uint32_t</span> newCount = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> k = <span class="number">0</span>; k &lt; <span class="number">3</span>; ++k)</span><br><span class="line">        <span class="keyword">if</span> (vertStamp[mesh.indices[t*<span class="number">3</span>+k]] != stamp) ++newCount;  <span class="comment">// 没出现过 = 新顶点</span></span><br><span class="line">    <span class="keyword">return</span> (verts.<span class="built_in">size</span>() + newCount) &lt;= maxVerts;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>结果就是：<strong>一个 64 顶点的簇，能装下约 98 个三角形</strong>（而不是 64 个）。因为每加一个相邻三角形，往往只带来 1 个新顶点。</p>
+<blockquote>
+<p>小彩蛋：<code>stamp</code> 是个很巧的 O(1) 去重技巧——每个簇分配一个唯一的”戳记号”，顶点被收进当前簇就盖上这个号。判断”顶点在不在簇里”只需比较戳记，不用每次线性扫描。开新簇时 <code>stamp++</code>，旧戳记自动失效。</p>
+</blockquote>
+<h3 id="第-3-步：算剔除信息（包围球-法线锥）"><a href="#第-3-步：算剔除信息（包围球-法线锥）" class="headerlink" title="第 3 步：算剔除信息（包围球 + 法线锥）"></a>第 3 步：算剔除信息（包围球 + 法线锥）</h3><p>一个簇切完，立即给它算两个”快速剔除代理”：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 包围球：中心 = 顶点均值，半径 = 最远顶点距离// 用途：视锥剔除 —— &quot;这个球在视野外吗？&quot;</span></span><br><span class="line"><span class="comment">// 法线锥：axis = 所有面法线之和归一化，cutoff = min(面法线 · axis)// 用途：背面剔除 —— &quot;这簇三角形的朝向全在背面吗？&quot;</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>包围球（bounding sphere）</strong>：GPU 判断这个簇在不在相机视野外，只需要做”球心到 6 个视锥平面的距离”测试，几个点积就搞定。</li>
+<li><strong>法线锥（normal cone）</strong>：如果整簇三角形的朝向都背对相机，可以整簇跳过，这是背面剔除。</li>
+</ul>
+<p>（本项目里法线锥目前<strong>算了但还没真正用上</strong>，是为后续背面剔除预留的。）</p>
+<h3 id="第-4-步：输出"><a href="#第-4-步：输出" class="headerlink" title="第 4 步：输出"></a>第 4 步：输出</h3><p>每个簇生成一条描述记录（共 48 字节），并把它的三角形索引<strong>连续</strong>写入一个”重排索引缓冲”：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Meshlet&#123;i&#125;:  索引缓冲 [firstIndex .. firstIndex + indexCount)</span><br></pre></td></tr></table></figure>
+
+<p>注意：<strong>只重排索引，顶点不重排</strong>。所以顶点缓冲还是原来那一份，只是索引被打包成”一个簇一段”。</p>
+<h2 id="四、切完之后，GPU-怎么用这些-meshlet？"><a href="#四、切完之后，GPU-怎么用这些-meshlet？" class="headerlink" title="四、切完之后，GPU 怎么用这些 meshlet？"></a>四、切完之后，GPU 怎么用这些 meshlet？</h2><p>这才是 meshlet 的”爽点”所在——<strong>整个 78 万三角形的场景，剔除 + 绘制只花 GPU 上极少的几次调用</strong>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">① Compute 剔除（一次 dispatch）</span><br><span class="line">   每个 GPU 线程处理一个 meshlet：</span><br><span class="line">   拿包围球 vs 6 个视锥平面 → 可见则写 instanceCount=3，不可见写 0</span><br><span class="line">   （instanceCount=0 的命令会被 GPU 自动跳过）</span><br><span class="line"></span><br><span class="line">② 屏障（同步：compute 写完 → 图形读取）</span><br><span class="line"></span><br><span class="line">③ 一次间接绘制 DrawIndexedIndirect</span><br><span class="line">   把上一步生成的命令一次画完，GPU 自己跳过那些 0</span><br></pre></td></tr></table></figure>
+
+<p>整个过程 <strong>CPU 全程不参与</strong>——不用遍历 625 个对象、不用算 8000 次包围球。这就是所谓 <strong>GPU-Driven</strong> 的精髓：把剔除这种”脏活”也交给 GPU 干，让 CPU 彻底解放出来。</p>
+<p>对应的 compute shader 核心逻辑：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 视锥剔除：包围球 vs 6 平面</span></span><br><span class="line"><span class="type">bool</span> visible = <span class="literal">true</span>;</span><br><span class="line"><span class="keyword">for</span> (<span class="type">int</span> p = <span class="number">0</span>; p &lt; <span class="number">6</span>; ++p) &#123;</span><br><span class="line">    <span class="type">float</span> dist = <span class="built_in">dot</span>(pc.planes[p].xyz, m.boundingSphere.xyz) + pc.planes[p].w;</span><br><span class="line">    <span class="keyword">if</span> (dist &lt; -m.boundingSphere.w) &#123; visible = <span class="literal">false</span>; <span class="keyword">break</span>; &#125;</span><br><span class="line">&#125;</span><br><span class="line">commands[i].instanceCount = visible ? <span class="number">3</span>u : <span class="number">0</span>u;  <span class="comment">// 3 = 画，0 = 跳过</span></span><br></pre></td></tr></table></figure>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/algorithms/" rel="tag"># algorithms</a>
+              <a href="/tags/meshlet/" rel="tag"># meshlet</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/09/15/Algorithms/%E9%98%9F%E5%88%97%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95/" rel="prev" title="队列排序算法">
+                  <i class="fa fa-angle-left"></i> 队列排序算法
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">MagicX</span>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+</body>
+</html>
