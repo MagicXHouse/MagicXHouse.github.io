@@ -29,19 +29,19 @@
 <meta property="og:site_name" content="MagicX Story">
 <meta property="og:description" content="从 CMOS 功耗模型与渲染管线推出移动端温控的三条边界：CPU 与 GPU 的能量去向不同、平台功耗墙会让负载与温度解耦、帧率与分辨率是同一个恒等式的两端。">
 <meta property="og:locale" content="en_US">
-<meta property="og:image" content="https://magicxhouse.github.io/images/20261123/apple17-temp.png">
-<meta property="og:image" content="https://magicxhouse.github.io/images/20261123/apple13-temp.png">
-<meta property="og:image" content="https://magicxhouse.github.io/images/20261123/mate60-temp.png">
-<meta property="og:image" content="https://magicxhouse.github.io/images/20261123/mate60-fps.png">
-<meta property="article:published_time" content="2026-11-23T09:10:00.000Z">
-<meta property="article:modified_time" content="2026-11-23T08:36:27.533Z">
+<meta property="og:image" content="https://magicxhouse.github.io/images/2026/apple17-temp.png">
+<meta property="og:image" content="https://magicxhouse.github.io/images/2026/apple13-temp.png">
+<meta property="og:image" content="https://magicxhouse.github.io/images/2026/mate60-temp.png">
+<meta property="og:image" content="https://magicxhouse.github.io/images/2026/mate60-fps.png">
+<meta property="article:published_time" content="2026-11-23T08:38:00.000Z">
+<meta property="article:modified_time" content="2026-11-23T08:40:31.367Z">
 <meta property="article:author" content="MagicX">
 <meta property="article:tag" content="cocos">
 <meta property="article:tag" content="性能优化">
 <meta property="article:tag" content="温控">
 <meta property="article:tag" content="移动端">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://magicxhouse.github.io/images/20261123/apple17-temp.png">
+<meta name="twitter:image" content="https://magicxhouse.github.io/images/2026/apple17-temp.png">
 
 
 <link rel="canonical" href="https://magicxhouse.github.io/2026/11/23/cocos%E5%B7%A5%E7%A8%8B%E5%AE%9E%E8%B7%B5/%E7%A7%BB%E5%8A%A8%E7%AB%AF%E6%B8%A9%E6%8E%A7%E7%9A%84%E7%89%A9%E7%90%86%E8%BE%B9%E7%95%8C%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88%E9%99%8D%E8%BD%BD%E4%B8%8D%E4%B8%80%E5%AE%9A%E9%99%8D%E6%B8%A9/">
@@ -232,7 +232,7 @@
       <span class="post-meta-item-text">Posted on</span>
       
 
-      <time title="Created: 2026-11-23 17:10:00 / Modified: 16:36:27" itemprop="dateCreated datePublished" datetime="2026-11-23T17:10:00+08:00">2026-11-23</time>
+      <time title="Created: 2026-11-23 16:38:00 / Modified: 16:40:31" itemprop="dateCreated datePublished" datetime="2026-11-23T16:38:00+08:00">2026-11-23</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -348,9 +348,9 @@
 
 <p>这背后不是”散热差”，而是<strong>平台的功耗分配策略</strong>：它优先保证系统合成和显示链路，把剩余预算留给应用。应用侧再怎么省，省出来的也只是剩余预算里的一小段。</p>
 <h3 id="佐证-1"><a href="#佐证-1" class="headerlink" title="佐证"></a>佐证</h3><p>iPhone 17 上，空场景跑到 60fps 就已经是 42.8℃，再加 7 层 GPU 负载，温度仍是 42.8℃——全部轮次的终点跨度只有 <strong>0.1℃</strong>。</p>
-<p><img src="/images/20261123/apple17-temp.png" alt="苹果 17 温度随时间"></p>
+<p><img src="/images/2026/apple17-temp.png" alt="苹果 17 温度随时间"></p>
 <p>iPhone 13（系统已移除温度接口，改用红外测温枪点测机身背面）呈现同样的形状：空场景 40.1℃、GPU 6 层 41.0℃、CPU 400 立方体 38.7℃，跨度 2.3℃。</p>
-<p><img src="/images/20261123/apple13-temp.png" alt="苹果 13 温度随时间"></p>
+<p><img src="/images/2026/apple13-temp.png" alt="苹果 13 温度随时间"></p>
 <p>值得注意的是最后那个数：<strong>CPU 负载比空场景还凉 1.4℃</strong>。这不是噪声，而是”负载把调度器推向更省电的频点”的直接表现。</p>
 <h3 id="含义"><a href="#含义" class="headerlink" title="含义"></a>含义</h3><p>在这类设备上，应用侧的任何降载都换不到温度——<strong>因为可削的那部分，根本不在你被分配到的预算里</strong>。</p>
 <p>这条边界不是靠优化能突破的，它属于平台。</p>
@@ -407,8 +407,8 @@
 </tbody></table>
 <p><strong>同一刀分辨率，锁帧之前砍不动，锁帧之后一刀砍掉 5.3℃。</strong></p>
 <p>华为 Mate 60 上这组数据更完整，也更接近”纯限帧”的极限：</p>
-<p><img src="/images/20261123/mate60-temp.png" alt="Mate 60 温度对比"></p>
-<p><img src="/images/20261123/mate60-fps.png" alt="Mate 60 帧率对比"></p>
+<p><img src="/images/2026/mate60-temp.png" alt="Mate 60 温度对比"></p>
+<p><img src="/images/2026/mate60-fps.png" alt="Mate 60 帧率对比"></p>
 <table>
 <thead>
 <tr>

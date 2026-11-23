@@ -29,25 +29,25 @@
 <meta property="og:site_name" content="MagicX Story">
 <meta property="og:description" content="本文介绍了cocos调试oppo小游戏的方法。">
 <meta property="og:locale" content="en_US">
-<meta property="og:image" content="https://magicxhouse.github.io/images/20261027/image-20261027145241376.png">
-<meta property="og:image" content="https://magicxhouse.github.io/images/20261027/image-20261027145501012.png">
-<meta property="og:image" content="https://magicxhouse.github.io/images/20261027/image-20261027145550209.png">
-<meta property="og:image" content="https://magicxhouse.github.io/images/20261027/image-20261027145647840.png">
-<meta property="og:image" content="https://magicxhouse.github.io/images/20261027/image-20261027150254599.png">
-<meta property="og:image" content="https://magicxhouse.github.io/images/20261027/image-20261027150339780.png">
-<meta property="og:image" content="https://magicxhouse.github.io/images/20261027/image-20261027151501229.png">
-<meta property="og:image" content="https://magicxhouse.github.io/images/20261027/image-20261027152051699.png">
-<meta property="og:image" content="https://magicxhouse.github.io/images/20261027/image-20261027152320950.png">
-<meta property="og:image" content="https://magicxhouse.github.io/images/20261027/image-20261027151656748.png">
-<meta property="og:image" content="https://magicxhouse.github.io/images/20261027/image-20261027151718436.png">
+<meta property="og:image" content="https://magicxhouse.github.io/images/2026/image-20261027145241376.png">
+<meta property="og:image" content="https://magicxhouse.github.io/images/2026/image-20261027145501012.png">
+<meta property="og:image" content="https://magicxhouse.github.io/images/2026/image-20261027145550209.png">
+<meta property="og:image" content="https://magicxhouse.github.io/images/2026/image-20261027145647840.png">
+<meta property="og:image" content="https://magicxhouse.github.io/images/2026/image-20261027150254599.png">
+<meta property="og:image" content="https://magicxhouse.github.io/images/2026/image-20261027150339780.png">
+<meta property="og:image" content="https://magicxhouse.github.io/images/2026/image-20261027151501229.png">
+<meta property="og:image" content="https://magicxhouse.github.io/images/2026/image-20261027152051699.png">
+<meta property="og:image" content="https://magicxhouse.github.io/images/2026/image-20261027152320950.png">
+<meta property="og:image" content="https://magicxhouse.github.io/images/2026/image-20261027151656748.png">
+<meta property="og:image" content="https://magicxhouse.github.io/images/2026/image-20261027151718436.png">
 <meta property="article:published_time" content="2026-10-27T06:41:55.000Z">
-<meta property="article:modified_time" content="2026-10-27T07:30:29.210Z">
+<meta property="article:modified_time" content="2026-11-23T08:40:31.364Z">
 <meta property="article:author" content="MagicX">
-<meta property="article:tag" content="debug">
 <meta property="article:tag" content="cocos">
+<meta property="article:tag" content="debug">
 <meta property="article:tag" content="oppo">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://magicxhouse.github.io/images/20261027/image-20261027145241376.png">
+<meta name="twitter:image" content="https://magicxhouse.github.io/images/2026/image-20261027145241376.png">
 
 
 <link rel="canonical" href="https://magicxhouse.github.io/2026/10/27/cocos%E5%B7%A5%E7%A8%8B%E5%AE%9E%E8%B7%B5/Cocos%20Oppo%E5%B0%8F%E6%B8%B8%E6%88%8F%E8%B0%83%E8%AF%95/">
@@ -236,9 +236,15 @@
         <i class="far fa-calendar"></i>
       </span>
       <span class="post-meta-item-text">Posted on</span>
-      
 
-      <time title="Created: 2026-10-27 14:41:55 / Modified: 15:30:29" itemprop="dateCreated datePublished" datetime="2026-10-27T14:41:55+08:00">2026-10-27</time>
+      <time title="Created: 2026-10-27 14:41:55" itemprop="dateCreated datePublished" datetime="2026-10-27T14:41:55+08:00">2026-10-27</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">Edited on</span>
+      <time title="Modified: 2026-11-23 16:40:31" itemprop="dateModified" datetime="2026-11-23T16:40:31+08:00">2026-11-23</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -265,34 +271,34 @@
 <p>演示demo：hello world</p>
 <h3 id="2、编译oppo项目"><a href="#2、编译oppo项目" class="headerlink" title="2、编译oppo项目"></a>2、编译oppo项目</h3><p>编译之前，要先检查项目<strong>设置 -&gt; 引擎管理器</strong>里面的内容是否符合预期，比如是否用webgl2、新旧渲染管线、物理渲染系统是什么。</p>
 <p>检查无误后，将主视口切回到场景管理器，不然因为历史原因，<strong>部分版本后续编译可能会卡住！</strong>我们切一下，统一避免了这个坑！</p>
-<p><img src="/images/20261027/image-20261027145241376.png" alt="image-20261027145241376"></p>
+<p><img src="/images/2026/image-20261027145241376.png" alt="image-20261027145241376"></p>
 <p>依次点击上方的<strong>发布到</strong>，<strong>应用</strong>：</p>
-<p><img src="/images/20261027/image-20261027145501012.png" alt="image-20261027145501012"></p>
+<p><img src="/images/2026/image-20261027145501012.png" alt="image-20261027145501012"></p>
 <p>点击oppo，其它版本的UI可能会不一样，叫oppo小游戏啥的，我们只认oppo就可以：</p>
-<p><img src="/images/20261027/image-20261027145550209.png" alt="image-20261027145550209"></p>
+<p><img src="/images/2026/image-20261027145550209.png" alt="image-20261027145550209"></p>
 <p>要检查启动场景是不是主场景！因为游戏可能有多个场景，别选错了。</p>
-<p><img src="/images/20261027/image-20261027145647840.png" alt="image-20261027145647840"></p>
+<p><img src="/images/2026/image-20261027145647840.png" alt="image-20261027145647840"></p>
 <p>编译的选项按需选取即可，然后点击<strong>构建 -&gt; 生成</strong>，等待构建完毕。</p>
-<p><img src="/images/20261027/image-20261027150254599.png" alt="image-20261027150254599"></p>
+<p><img src="/images/2026/image-20261027150254599.png" alt="image-20261027150254599"></p>
 <p>最终的生成产物如下：</p>
-<p><img src="/images/20261027/image-20261027150339780.png" alt="image-20261027150339780"></p>
+<p><img src="/images/2026/image-20261027150339780.png" alt="image-20261027150339780"></p>
 <p>我们要把这个产物用adb的形式传到手机的**&#x2F;sdcard&#x2F;games** 目录，说白了就是根目录的games文件夹，后续oppo调试器可以读取。</p>
 <p>参考命令：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">adb push &quot;D:\proj\dash\oppoCase\build\oppo-mini-game\dist\com.oppo.cocos.rpk&quot; /sdcard/games</span><br></pre></td></tr></table></figure>
 
-<p><img src="/images/20261027/image-20261027151501229.png" alt="image-20261027151501229"></p>
+<p><img src="/images/2026/image-20261027151501229.png" alt="image-20261027151501229"></p>
 <p>adb不熟可以参考我之前的博客：<a href="https://magicxhouse.github.io/2026/09/14/Tools/adb/">https://magicxhouse.github.io/2026/09/14/Tools/adb/</a></p>
 <p>若构建过程中设置了主包为远程包，且设置了服务器地址，如下：</p>
-<p><img src="/images/20261027/image-20261027152051699.png" alt="image-20261027152051699"></p>
+<p><img src="/images/2026/image-20261027152051699.png" alt="image-20261027152051699"></p>
 <p>那么要提前开启服务，我是在本地开的服务，就用http-server打开了：</p>
-<p><img src="/images/20261027/image-20261027152320950.png" alt="image-20261027152320950"></p>
+<p><img src="/images/2026/image-20261027152320950.png" alt="image-20261027152320950"></p>
 <h3 id="3、安装oppo调试器"><a href="#3、安装oppo调试器" class="headerlink" title="3、安装oppo调试器"></a>3、安装oppo调试器</h3><p>从oppo官网下载最新版本的小游戏调试器，并且安装到手机。</p>
 <p><a target="_blank" rel="noopener" href="https://ie-activity-cn.heytapimage.com/static/minigame/CN/docs/index.html#/download/index">https://ie-activity-cn.heytapimage.com/static/minigame/CN/docs/index.html#/download/index</a></p>
 <p>这个调试器会默认读取&#x2F;sdcard&#x2F;games的com.oppo.cocos.rpk包，就是我们上一步生成的包。</p>
 <p>打开包验证功能即可。</p>
-<img src="/images/20261027/image-20261027151656748.png" alt="image-20261027151656748" style="zoom:50%;" />
+<img src="/images/2026/image-20261027151656748.png" alt="image-20261027151656748" style="zoom:50%;" />
 
-<img src="/images/20261027/image-20261027151718436.png" alt="image-20261027151718436" style="zoom:50%;" />
+<img src="/images/2026/image-20261027151718436.png" alt="image-20261027151718436" style="zoom:50%;" />
 
     </div>
 
@@ -302,8 +308,8 @@
 
     <footer class="post-footer">
           <div class="post-tags">
-              <a href="/tags/debug/" rel="tag"># debug</a>
               <a href="/tags/cocos/" rel="tag"># cocos</a>
+              <a href="/tags/debug/" rel="tag"># debug</a>
               <a href="/tags/oppo/" rel="tag"># oppo</a>
           </div>
 
