@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/themes/blue/pace-theme-minimal.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous" defer></script>
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"magicxhouse.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.29.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":"mac"},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="从 CMOS 功耗模型与渲染管线推出移动端温控的三条边界：CPU 与 GPU 的能量去向不同、平台功耗墙会让负载与温度解耦、帧率与分辨率是同一个恒等式的两端。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="移动端温控的物理边界：为什么降载不一定降温">
+<meta property="og:url" content="https://magicxhouse.github.io/2026/11/23/cocos%E5%B7%A5%E7%A8%8B%E5%AE%9E%E8%B7%B5/%E7%A7%BB%E5%8A%A8%E7%AB%AF%E6%B8%A9%E6%8E%A7%E7%9A%84%E7%89%A9%E7%90%86%E8%BE%B9%E7%95%8C%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88%E9%99%8D%E8%BD%BD%E4%B8%8D%E4%B8%80%E5%AE%9A%E9%99%8D%E6%B8%A9/index.html">
+<meta property="og:site_name" content="MagicX Story">
+<meta property="og:description" content="从 CMOS 功耗模型与渲染管线推出移动端温控的三条边界：CPU 与 GPU 的能量去向不同、平台功耗墙会让负载与温度解耦、帧率与分辨率是同一个恒等式的两端。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://magicxhouse.github.io/images/20261123/apple17-temp.png">
+<meta property="og:image" content="https://magicxhouse.github.io/images/20261123/apple13-temp.png">
+<meta property="og:image" content="https://magicxhouse.github.io/images/20261123/mate60-temp.png">
+<meta property="og:image" content="https://magicxhouse.github.io/images/20261123/mate60-fps.png">
+<meta property="article:published_time" content="2026-11-23T09:10:00.000Z">
+<meta property="article:modified_time" content="2026-11-23T08:36:27.533Z">
+<meta property="article:author" content="MagicX">
+<meta property="article:tag" content="cocos">
+<meta property="article:tag" content="性能优化">
+<meta property="article:tag" content="温控">
+<meta property="article:tag" content="移动端">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://magicxhouse.github.io/images/20261123/apple17-temp.png">
+
+
+<link rel="canonical" href="https://magicxhouse.github.io/2026/11/23/cocos%E5%B7%A5%E7%A8%8B%E5%AE%9E%E8%B7%B5/%E7%A7%BB%E5%8A%A8%E7%AB%AF%E6%B8%A9%E6%8E%A7%E7%9A%84%E7%89%A9%E7%90%86%E8%BE%B9%E7%95%8C%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88%E9%99%8D%E8%BD%BD%E4%B8%8D%E4%B8%80%E5%AE%9A%E9%99%8D%E6%B8%A9/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://magicxhouse.github.io/2026/11/23/cocos%E5%B7%A5%E7%A8%8B%E5%AE%9E%E8%B7%B5/%E7%A7%BB%E5%8A%A8%E7%AB%AF%E6%B8%A9%E6%8E%A7%E7%9A%84%E7%89%A9%E7%90%86%E8%BE%B9%E7%95%8C%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88%E9%99%8D%E8%BD%BD%E4%B8%8D%E4%B8%80%E5%AE%9A%E9%99%8D%E6%B8%A9/","path":"2026/11/23/cocos工程实践/移动端温控的物理边界：为什么降载不一定降温/","title":"移动端温控的物理边界：为什么降载不一定降温"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>移动端温控的物理边界：为什么降载不一定降温 | MagicX Story</title>
+  
+
+
+
+
+
+
+
+
+  
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/11.10.1/mermaid.min.js","integrity":"sha256-BmQmdWDS8X2OTbrwELWK366LV6escyWhHHe0XCTU/Hk="}}</script>
+  <script src="/js/third-party/tags/mermaid.js" defer></script>
+
+
+
+  <script src="/js/third-party/pace.js" defer></script>
+
+
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">MagicX Story</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%9B%B6%E3%80%81%E4%B8%80%E4%B8%AA%E5%BC%8F%E5%AD%90"><span class="nav-number">1.</span> <span class="nav-text">零、一个式子</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E6%8E%A8%E8%AE%BA%E4%B8%80%EF%BC%9AGPU-%E8%B4%9F%E8%BD%BD%E4%B8%8E-CPU-%E8%B4%9F%E8%BD%BD%E7%9A%84%E8%83%BD%E9%87%8F%E5%8E%BB%E5%90%91%E4%B8%8D%E5%90%8C"><span class="nav-number">2.</span> <span class="nav-text">一、推论一：GPU 负载与 CPU 负载的能量去向不同</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A1%AB%E5%85%85%E7%8E%87%E7%9A%84%E8%83%BD%E9%87%8F%E5%8E%BB%E4%BA%86%E5%93%AA"><span class="nav-number">2.1.</span> <span class="nav-text">填充率的能量去了哪</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%80%BB%E8%BE%91%E7%9A%84%E8%83%BD%E9%87%8F%E5%8E%BB%E4%BA%86%E5%93%AA"><span class="nav-number">2.2.</span> <span class="nav-text">逻辑的能量去了哪</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%90%E8%AF%81"><span class="nav-number">2.3.</span> <span class="nav-text">佐证</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E6%8E%A8%E8%AE%BA%E4%BA%8C%EF%BC%9A%E5%BD%93%E5%9B%BA%E5%AE%9A%E5%BC%80%E9%94%80%E5%8D%A0%E6%BB%A1%E5%8A%9F%E8%80%97%E9%A2%84%E7%AE%97%EF%BC%8C%E8%B4%9F%E8%BD%BD%E4%B8%8E%E6%B8%A9%E5%BA%A6%E8%A7%A3%E8%80%A6"><span class="nav-number">3.</span> <span class="nav-text">二、推论二：当固定开销占满功耗预算，负载与温度解耦</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%90%E8%AF%81-1"><span class="nav-number">3.1.</span> <span class="nav-text">佐证</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%90%AB%E4%B9%89"><span class="nav-number">3.2.</span> <span class="nav-text">含义</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E6%8E%A8%E8%AE%BA%E4%B8%89%EF%BC%9A%E5%B8%A7%E7%8E%87%E4%B8%8E%E5%88%86%E8%BE%A8%E7%8E%87%E6%98%AF%E5%90%8C%E4%B8%80%E4%B8%AA%E6%81%92%E7%AD%89%E5%BC%8F%E7%9A%84%E4%B8%A4%E7%AB%AF"><span class="nav-number">4.</span> <span class="nav-text">三、推论三：帧率与分辨率是同一个恒等式的两端</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8E%A8%E5%AF%BC"><span class="nav-number">4.1.</span> <span class="nav-text">推导</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%90%E8%AF%81-2"><span class="nav-number">4.2.</span> <span class="nav-text">佐证</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%80%E4%B8%AA%E4%BF%AE%E6%AD%A3%E9%A1%B9%EF%BC%9A%E5%8D%87%E9%87%87%E6%A0%B7%E7%9A%84%E5%BC%80%E9%94%80%E4%BC%9A%E6%94%B9%E5%8F%98-w-t"><span class="nav-number">4.3.</span> <span class="nav-text">一个修正项：升采样的开销会改变 w(t)</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E6%8A%8A%E4%B8%89%E6%9D%A1%E5%90%88%E8%B5%B7%E6%9D%A5%E7%9C%8B"><span class="nav-number">5.</span> <span class="nav-text">四、把三条合起来看</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%80%E6%9D%A1%E6%89%BF%E8%AF%BA"><span class="nav-number">5.1.</span> <span class="nav-text">一条承诺</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E6%B5%8B%E8%AF%95%E5%B7%A5%E7%A8%8B"><span class="nav-number">6.</span> <span class="nav-text">五、测试工程</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="MagicX"
+      src="/images/touxiang.jpg">
+  <p class="site-author-name" itemprop="name">MagicX</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">16</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/MagicXHouse" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;MagicXHouse" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:xiaojianhang001@gmail.com" title="E-Mail → mailto:xiaojianhang001@gmail.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://magicxhouse.github.io/2026/11/23/cocos%E5%B7%A5%E7%A8%8B%E5%AE%9E%E8%B7%B5/%E7%A7%BB%E5%8A%A8%E7%AB%AF%E6%B8%A9%E6%8E%A7%E7%9A%84%E7%89%A9%E7%90%86%E8%BE%B9%E7%95%8C%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88%E9%99%8D%E8%BD%BD%E4%B8%8D%E4%B8%80%E5%AE%9A%E9%99%8D%E6%B8%A9/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/touxiang.jpg">
+      <meta itemprop="name" content="MagicX">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="MagicX Story">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="移动端温控的物理边界：为什么降载不一定降温 | MagicX Story">
+      <meta itemprop="description" content="从 CMOS 功耗模型与渲染管线推出移动端温控的三条边界：CPU 与 GPU 的能量去向不同、平台功耗墙会让负载与温度解耦、帧率与分辨率是同一个恒等式的两端。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          移动端温控的物理边界：为什么降载不一定降温
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
+
+      <time title="Created: 2026-11-23 17:10:00 / Modified: 16:36:27" itemprop="dateCreated datePublished" datetime="2026-11-23T17:10:00+08:00">2026-11-23</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/cocos%E5%B7%A5%E7%A8%8B%E5%AE%9E%E8%B7%B5/" itemprop="url" rel="index"><span itemprop="name">cocos工程实践</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+            <div class="post-description">从 CMOS 功耗模型与渲染管线推出移动端温控的三条边界：CPU 与 GPU 的能量去向不同、平台功耗墙会让负载与温度解耦、帧率与分辨率是同一个恒等式的两端。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>引擎做温控，最自然的设计是：<strong>游戏跑得越重，机身越烫；把负载降下来，温度就下来。</strong></p>
+<p>这句话在多数时候成立，但它有一个隐含前提——<strong>你降掉的那部分负载，恰好是发热的主要来源</strong>。而这个前提是否成立，不由策略决定，由芯片和平台决定。</p>
+<p>与其从实验讲起，不如先把模型摆出来。下面的三条结论都能从功耗模型和渲染管线推出来，真机数据只是用来验证推论，而不是用来”发现”结论。</p>
+<h2 id="零、一个式子"><a href="#零、一个式子" class="headerlink" title="零、一个式子"></a>零、一个式子</h2><p>机身温度不直接由帧率或分辨率决定，而由<strong>单位时间内芯片翻转的电荷量</strong>决定。经典 CMOS 动态功耗：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">P ≈ α · C · V² · f + P_static</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>C</code> 不是芯片的总电容，而是<strong>当前被激活的那部分</strong>——同时翻转的晶体管面积</li>
+<li><code>f</code> 是时钟频率，<code>α</code> 是翻转率</li>
+<li><code>P_static</code> 是漏电，与温度和工艺强相关</li>
+</ul>
+<p>温度是 <code>P</code> 对时间的积分，再被散热能力削掉。所以”降低负载”要真正降温，必须做到一件事：</p>
+<blockquote>
+<p><strong>让 <code>C × f</code> 的乘积变小，而不只是让某些环节变快。</strong></p>
+</blockquote>
+<p>记住这一点，后面的三条边界都是它的推论。</p>
+<h2 id="一、推论一：GPU-负载与-CPU-负载的能量去向不同"><a href="#一、推论一：GPU-负载与-CPU-负载的能量去向不同" class="headerlink" title="一、推论一：GPU 负载与 CPU 负载的能量去向不同"></a>一、推论一：GPU 负载与 CPU 负载的能量去向不同</h2><h3 id="填充率的能量去了哪"><a href="#填充率的能量去了哪" class="headerlink" title="填充率的能量去了哪"></a>填充率的能量去了哪</h3><p>像素填充的成本不在”画了多少个三角形”，而在<strong>每个像素都要读改写一次 framebuffer</strong>。这意味着：</p>
+<ul>
+<li>数据要出片——落到片外 DRAM</li>
+<li><strong>DRAM 每 bit 的访存能耗，比片上 SRAM 高 1~2 个数量级</strong></li>
+<li>而 GPU 是”整块芯片一起拉起来”的：<code>C</code> 是全部流处理器面积</li>
+</ul>
+<p>于是填充率主导的负载，<code>C</code> 极大、<code>f</code> 也高，功耗是”面积 × 频率”的量级。</p>
+<h3 id="逻辑的能量去了哪"><a href="#逻辑的能量去了哪" class="headerlink" title="逻辑的能量去了哪"></a>逻辑的能量去了哪</h3><p>JS 单线程把一个大核压满，情况完全不同：</p>
+<ul>
+<li>只有一个核在跑，其余核可以被时钟门控关掉——<code>C</code> 只有一个核的量级</li>
+<li>工作集小，绝大部分访存命中 L1&#x2F;L2，<strong>几乎不出片</strong></li>
+<li>频繁的短时唤醒，还能被 DVFS 压到较低的电压点</li>
+</ul>
+<p>同样是”把帧率从 60 压到 30”，GPU 场景和 CPU 场景的 <code>α·C·V²·f</code> 可以差出数倍。</p>
+<h3 id="佐证"><a href="#佐证" class="headerlink" title="佐证"></a>佐证</h3><p>六台机器、同一套采集方法，测”负载带来的那部分热量”（T2 − T1：跑场景的稳态温度减空跑稳态温度）：</p>
+<table>
+<thead>
+<tr>
+<th align="left">机型</th>
+<th align="right">GPU 场景负载温升</th>
+<th align="right">CPU 场景负载温升</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">红米 K30（低端安卓）</td>
+<td align="right">+7.5℃</td>
+<td align="right">+3.5℃</td>
+</tr>
+<tr>
+<td align="left">OPPO 平板</td>
+<td align="right">+9.4℃</td>
+<td align="right">−0.9℃</td>
+</tr>
+<tr>
+<td align="left">小米 15（旗舰）</td>
+<td align="right">+10.1℃</td>
+<td align="right">−0.7℃</td>
+</tr>
+<tr>
+<td align="left">华为 Mate 60（鸿蒙）</td>
+<td align="right"><strong>+15.0℃</strong></td>
+<td align="right">+3.0℃</td>
+</tr>
+<tr>
+<td align="left">苹果 17 &#x2F; 13</td>
+<td align="right">+0.5℃ &#x2F; +0.9℃</td>
+<td align="right">−0.4℃ &#x2F; —</td>
+</tr>
+</tbody></table>
+<p>最干净的一组来自 OPPO 平板：把 CPU 负载翻倍到 2000 个实例化立方体，帧率从 51.7 砍到 <strong>26.3fps</strong>（比同机 GPU 场景的 30fps 还低），温度却只有 <strong>−0.9℃</strong>。</p>
+<p>帧率掉了一半，<code>α·C·V²·f</code> 几乎没变——因为那部分负载的 <code>C</code> 本来就小。</p>
+<p>还有一个更直接的对照，来自红米 K30 同一台机器：</p>
+<table>
+<thead>
+<tr>
+<th align="left">配置</th>
+<th align="right">帧率</th>
+<th align="right">温升</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">CPU 负载 + 锁 30fps</td>
+<td align="right">28.5 fps</td>
+<td align="right">+8.6℃</td>
+</tr>
+<tr>
+<td align="left">GPU 负载 + 降分辨率</td>
+<td align="right">28.0 fps</td>
+<td align="right"><strong>+14.0℃</strong></td>
+</tr>
+</tbody></table>
+<p><strong>帧率几乎相同，<code>P</code> 差出一大截。</strong> 帧率描述的是”算力是否足够”，不描述”功率有多高”——这是两件事，只是平时被混在一起看。</p>
+<h2 id="二、推论二：当固定开销占满功耗预算，负载与温度解耦"><a href="#二、推论二：当固定开销占满功耗预算，负载与温度解耦" class="headerlink" title="二、推论二：当固定开销占满功耗预算，负载与温度解耦"></a>二、推论二：当固定开销占满功耗预算，负载与温度解耦</h2><p>手机 SoC 都有功耗墙。这带来一个容易被忽略的状态：</p>
+<p>当”与游戏负载无关的固定开销”——系统合成、图形桥接、屏幕刷新、平台侧的高清模式——已经把功耗预算吃满时，芯片处在<strong>功耗受限状态</strong>。此时：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">加负载 → 频率下降 → 总功耗不变 → 温度不变</span><br></pre></td></tr></table></figure>
+
+<p>这背后不是”散热差”，而是<strong>平台的功耗分配策略</strong>：它优先保证系统合成和显示链路，把剩余预算留给应用。应用侧再怎么省，省出来的也只是剩余预算里的一小段。</p>
+<h3 id="佐证-1"><a href="#佐证-1" class="headerlink" title="佐证"></a>佐证</h3><p>iPhone 17 上，空场景跑到 60fps 就已经是 42.8℃，再加 7 层 GPU 负载，温度仍是 42.8℃——全部轮次的终点跨度只有 <strong>0.1℃</strong>。</p>
+<p><img src="/images/20261123/apple17-temp.png" alt="苹果 17 温度随时间"></p>
+<p>iPhone 13（系统已移除温度接口，改用红外测温枪点测机身背面）呈现同样的形状：空场景 40.1℃、GPU 6 层 41.0℃、CPU 400 立方体 38.7℃，跨度 2.3℃。</p>
+<p><img src="/images/20261123/apple13-temp.png" alt="苹果 13 温度随时间"></p>
+<p>值得注意的是最后那个数：<strong>CPU 负载比空场景还凉 1.4℃</strong>。这不是噪声，而是”负载把调度器推向更省电的频点”的直接表现。</p>
+<h3 id="含义"><a href="#含义" class="headerlink" title="含义"></a>含义</h3><p>在这类设备上，应用侧的任何降载都换不到温度——<strong>因为可削的那部分，根本不在你被分配到的预算里</strong>。</p>
+<p>这条边界不是靠优化能突破的，它属于平台。</p>
+<h2 id="三、推论三：帧率与分辨率是同一个恒等式的两端"><a href="#三、推论三：帧率与分辨率是同一个恒等式的两端" class="headerlink" title="三、推论三：帧率与分辨率是同一个恒等式的两端"></a>三、推论三：帧率与分辨率是同一个恒等式的两端</h2><p>这是三条里最有实操价值的一条，因为它解释了一个反直觉现象：<strong>只降分辨率，温度几乎不动。</strong></p>
+<h3 id="推导"><a href="#推导" class="headerlink" title="推导"></a>推导</h3><p>未封顶时，一帧耗时 <code>t</code> 与帧率 <code>f</code> 满足：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">f × t = 1000</span><br></pre></td></tr></table></figure>
+
+<p>降分辨率让 <code>t</code> 变小；如果 <code>f</code> 自由，它会立刻变大来填满时间预算。单位时间内的总工作量：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">W = f × w(t)</span><br></pre></td></tr></table></figure>
+
+<p><code>w(t)</code> 是单帧工作量，随 <code>t</code> 下降而下降。但因为 <code>f</code> 同时上升，<code>W</code> 几乎不变——**<code>α·C·V²·f</code> 也就不变**。</p>
+<p>要打破这个循环，只能先把 <code>f</code> 钉死：锁帧之后，<code>t</code> 的下降不再被 <code>f</code> 的上升抵消，<code>W</code> 才真的变小。</p>
+<h3 id="佐证-2"><a href="#佐证-2" class="headerlink" title="佐证"></a>佐证</h3><p>红米 K30，只降分辨率（1.00 → 0.70），帧率自由：</p>
+<table>
+<thead>
+<tr>
+<th align="left">配置</th>
+<th align="right">帧率</th>
+<th align="right">温升</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">GPU 基线（1.00）</td>
+<td align="right">22.7 fps</td>
+<td align="right">+14.4℃</td>
+</tr>
+<tr>
+<td align="left">只降分辨率（0.70）</td>
+<td align="right"><strong>28.0 fps</strong></td>
+<td align="right"><strong>+14.0℃</strong></td>
+</tr>
+</tbody></table>
+<p>帧率涨了 23%，温度只降 0.4℃——<code>W</code> 守恒，画质白掉。</p>
+<p>同一台 OPPO 平板上，把顺序换过来：</p>
+<table>
+<thead>
+<tr>
+<th align="left">配置</th>
+<th align="right">温升</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">GPU 基线</td>
+<td align="right">+13.1℃</td>
+</tr>
+<tr>
+<td align="left">只限帧 30fps</td>
+<td align="right">+11.9℃（−1.2）</td>
+</tr>
+<tr>
+<td align="left">限帧 30 + 分辨率 0.70</td>
+<td align="right"><strong>+6.6℃（再 −5.3）</strong></td>
+</tr>
+</tbody></table>
+<p><strong>同一刀分辨率，锁帧之前砍不动，锁帧之后一刀砍掉 5.3℃。</strong></p>
+<p>华为 Mate 60 上这组数据更完整，也更接近”纯限帧”的极限：</p>
+<p><img src="/images/20261123/mate60-temp.png" alt="Mate 60 温度对比"></p>
+<p><img src="/images/20261123/mate60-fps.png" alt="Mate 60 帧率对比"></p>
+<table>
+<thead>
+<tr>
+<th align="left">配置</th>
+<th align="right">帧率</th>
+<th align="right">温升</th>
+<th align="right">削掉占比</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">温控关</td>
+<td align="right">41.3 fps</td>
+<td align="right">+18.0℃</td>
+<td align="right">—</td>
+</tr>
+<tr>
+<td align="left">只限帧 30fps</td>
+<td align="right">29.8 fps</td>
+<td align="right">+10.0℃</td>
+<td align="right"><strong>53%</strong></td>
+</tr>
+<tr>
+<td align="left">限帧 30 + 分辨率 0.70</td>
+<td align="right">29.8 fps</td>
+<td align="right">+9.0℃</td>
+<td align="right">60%</td>
+</tr>
+</tbody></table>
+<p>限帧一个人削掉了一半多的热量；再降分辨率只多值 1℃。</p>
+<h3 id="一个修正项：升采样的开销会改变-w-t"><a href="#一个修正项：升采样的开销会改变-w-t" class="headerlink" title="一个修正项：升采样的开销会改变 w(t)"></a>一个修正项：升采样的开销会改变 <code>w(t)</code></h3><p>Mate 60 那”只多值 1℃”，来自它的 FSR：每帧需要按原生分辨率跑两趟 pass，把降分辨率省下的 <code>w(t)</code> 又加了回去。</p>
+<p>所以这个恒等式里，<code>w(t)</code> 不只包含被缩放的渲染成本，还包含升采样的固定开销。<strong>同一套策略在 OPPO 上值 5.3℃，在 Mate 60 上只值 1.0℃</strong>——差的就是这一项。</p>
+<h2 id="四、把三条合起来看"><a href="#四、把三条合起来看" class="headerlink" title="四、把三条合起来看"></a>四、把三条合起来看</h2><p>温控能动的，只有”负载产热”那一段。而这一段的大小由<strong>场景结构</strong>和<strong>芯片能效</strong>共同决定，不由策略决定：</p>
+<table>
+<thead>
+<tr>
+<th align="left">机型</th>
+<th align="right">负载温升（T2 − T1）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">苹果 17</td>
+<td align="right">+0.5℃</td>
+</tr>
+<tr>
+<td align="left">苹果 13</td>
+<td align="right">+0.9℃</td>
+</tr>
+<tr>
+<td align="left">红米 K30</td>
+<td align="right">+7.5℃</td>
+</tr>
+<tr>
+<td align="left">OPPO 平板</td>
+<td align="right">+9.4℃</td>
+</tr>
+<tr>
+<td align="left">小米 15</td>
+<td align="right">+10.1℃</td>
+</tr>
+<tr>
+<td align="left">华为 Mate 60</td>
+<td align="right">+15.0℃</td>
+</tr>
+</tbody></table>
+<p><strong>同样的”打游戏”，可操作空间差了 30 倍。</strong></p>
+<p>这决定了它不是”一个能降温的功能”，而是”一个在特定结构下有效的工具”。所以在工程上，与其默认开启，不如把它做成可判断的：</p>
+<ol>
+<li><strong>降分辨率，帧率明显涨</strong>（1.00 → 0.70 涨超过 20%）→ 瓶颈在填充率，可削</li>
+<li><strong>比空项目热 5℃ 以上</strong> → 有可削的空间</li>
+<li><strong>非 iOS 用户反馈发烫</strong> → 真实场景比实验室更准</li>
+</ol>
+<p>反例只有一个：<strong>什么都不画也烫</strong>——这类属于推论二，削每帧固定开销才是正解，降档无用。</p>
+<h3 id="一条承诺"><a href="#一条承诺" class="headerlink" title="一条承诺"></a>一条承诺</h3><p>因为上述三条边界都不在应用侧手里，所以必须把话说在前面：</p>
+<blockquote>
+<p>开了温控、温度没降下来是有可能的；为了降温降了画质、却没换到温度（误伤）也难以完全避免。</p>
+<p><strong>能承诺的只有一条——不会更烫。大概率更凉，但不是 100% 更凉。</strong></p>
+</blockquote>
+<h2 id="五、测试工程"><a href="#五、测试工程" class="headerlink" title="五、测试工程"></a>五、测试工程</h2><p>压力测试程序开源在这里，两个负载场景都做了”只在一个维度加成本”的设计，参数可运行时调整，采集口径与本文一致：</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/MagicXHouse/ThermalStressTest">https://github.com/MagicXHouse/ThermalStressTest</a></p>
+<hr>
+<p><strong>口径说明</strong>：文中温升均为「结束温度 − 起始温度」，起点统一控制在 25~27℃，每轮跑满至稳态；跨机型比较只看”负载带来的那部分”，不比绝对温度。iPhone 13 因系统已移除温度接口，使用红外测温枪点测机身背面表面温度，与其他机型的电池温度不可直接比绝对值，仅表示同一台内部的跨度。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/cocos/" rel="tag"># cocos</a>
+              <a href="/tags/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/" rel="tag"># 性能优化</a>
+              <a href="/tags/%E6%B8%A9%E6%8E%A7/" rel="tag"># 温控</a>
+              <a href="/tags/%E7%A7%BB%E5%8A%A8%E7%AB%AF/" rel="tag"># 移动端</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/10/27/cocos%E5%B7%A5%E7%A8%8B%E5%AE%9E%E8%B7%B5/Cocos%20Oppo%E5%B0%8F%E6%B8%B8%E6%88%8F%E8%B0%83%E8%AF%95/" rel="prev" title="Cocos oppo小游戏调试">
+                  <i class="fa fa-angle-left"></i> Cocos oppo小游戏调试
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">MagicX</span>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+</body>
+</html>
